@@ -1,0 +1,10 @@
+name: rcanvisualtool
+title:
+username: tanguygen
+account: tanguygen
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14392814
+bundleId: 10054815
+url: https://tanguygen.shinyapps.io/rcanvisualtool/
+version: 1

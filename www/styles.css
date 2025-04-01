@@ -1,0 +1,30 @@
+.header h2 {
+  font-size: 60px;
+  color: #006494 !important; 
+  font-weight: bold;
+  font-family: "Playfair Display", serif !important;
+  text-align: center;
+}
+h3{
+  text-align: center;
+}
+div.row {
+  position: relative;
+  top: 30px;
+}
+
+.well { background-color: white !important; border: 1px solid #ddd; }
+    .sidebar { background-color: white !important; }
+
+ #main_panel {
+      overflow-y: auto;  /* Enable vertical scrolling */
+      max-height: 90vh;  /* Prevent overflow beyond viewport height */
+    }
+
+.nav-tabs > li > a {
+      font-size: 20px !important;  /* Increase font size */
+      padding: 15px 20px !important; /* Increase padding */
+    }
+    .nav-tabs {
+      border-bottom: 3px solid #000 !important; /* Thicker underline */
+    }
