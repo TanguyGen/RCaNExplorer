@@ -10,7 +10,7 @@
 app_server <- function(input, output, session) {
   options(shiny.maxRequestSize=1000*1024^2)
   
-  Info_table<-read.csv("Data/Info_table.csv")
+  Info_table<-read.csv(app_sys("www/Info_table.csv"))
   
   data <- reactiveValues(CaNSample = NULL, CaNSample_long = NULL, numgroups = NULL)
   
