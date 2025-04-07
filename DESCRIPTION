@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 Package: RCaNvisualtool
 Title: RCaN Visual Tool
+=======
+Package: RCaNExplorer
+Title: RCaNExplorer
+>>>>>>> 1cf55a5 (Update to golem structure)
 Version: 0.0.0.9000
 Authors@R: 
     person("Tanguy", "Genthon", , "tanguy.genthon@hi.no", role = c("aut", "cre"))
