@@ -15,25 +15,48 @@ RatioConsumptionBiomass<- function(Data,
   info<-info%>%
     rename(series=ID)
   
-  Filtered_data<-Data%>%
-    filter(grepl(paste0(param, collapse = "$|"), Var))%>%
-    mutate(series=Var,
-           isBiomass=series %in% param)
+  Biomasses <- Data %>%
+    filter(Var %in% param)%>%
+    rename(series = Var, biomass = value)
   
-  if (length(Filtered_data) == 0) 
-    stop("param not recognized")
+  Consumptions <- Data %>%
+    filter(stringr::str_detect(Var, paste0("_(", paste(param, collapse = "|"), ")$"))) %>%
+    mutate(
+      Prey = stringr::word(Var, 1, sep = "_"),
+      Predator = stringr::word(Var, 2, sep = "_")
+    )%>%
+    filter(Predator %in% param) %>%
+    group_by(Predator,Year,Sample_id) %>%
+    summarise(consumption = sum(value), .groups = "drop") %>%
+    rename(series = Predator)
   
-  if (group==TRUE){
-    Filtered_data<-Filtered_data%>%
-      group_by(Year,Sample_id,isBiomass)%>%
-      summarise(value=sum(value))%>%
-      mutate(series=grouplabel)
-    facet=FALSE
-    info <- rbind(info, c(grouplabel,grouplabel,"#27548A",FALSE))
+  new_data <- full_join(Biomasses, Consumptions, by = c("series","Year","Sample_id")) %>%
+    replace_na(list(biomass = 0, consumption = 0))%>%
+    filter(Year!=max(Year))
+
+  
+  if (group) {
+    new_data <- new_data %>%
+      group_by(Year,Sample_id)%>%
+      summarise(
+        biomass = sum(biomass),
+        consumption = sum(consumption)
+      ) %>%
+      ungroup()%>%
+      mutate(series = grouplabel)%>%
+      select(series, biomass, consumption,Year,Sample_id)
+    
+    info <- bind_rows(
+      info,
+      tibble::tibble(series = grouplabel, FullName = grouplabel, Color = "#27548A", Biomass = FALSE)
+    )
   }
   
-  quantiles <-Filtered_data%>%
-    group_by(Year,isBiomass)
+  new_data<-new_data%>%
+    mutate(value=consumption/biomass)%>%
+    select(series, value,Year,Sample_id)
+  
+  quantiles <-new_data%>%
     group_by(Year,series)%>%
     summarise(
       quantiles = list(quantile(value, c(0, .025, 0.25, .50, .75, .975, 1))),
@@ -48,10 +71,12 @@ RatioConsumptionBiomass<- function(Data,
   quantiles<-quantiles%>%
     left_join(info,by="series")
   
-  Filtered_data<-Filtered_data %>%
+  
+  new_data<-new_data %>%
     left_join(info,by="series")
   
-  g<-Quantiles_plot(quantiles,Filtered_data,selectedsamples,facet=TRUE,ylab,session)
+  
+  g<-Quantiles_plot(quantiles,new_data,selectedsamples,facet=TRUE,ylab="Ratio Consumption/Biomass",session)
   
   return(g)
 }

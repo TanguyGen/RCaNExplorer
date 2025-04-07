@@ -202,7 +202,7 @@ app_server <- function(input, output, session) {
       FluxSerie(data$CaNSample_long, ecosystem_components, info = Info_table, session = session)
       
     } else if (input$Typegraph == "Ratio Consumption/Biomass") {
-      RatioConsumptionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, session = session)
+      RatioConsumptionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, group= input$groupspecies,session = session)
     }
   })
   

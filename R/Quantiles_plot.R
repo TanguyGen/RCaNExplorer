@@ -36,6 +36,9 @@ Quantiles_plot <- function(quantiles, Data, selectedsamples, facet, ylab, sessio
   # Rename last columns to S1, S2, S3
   colnames(fewseries)[(ncol(fewseries) - 2):ncol(fewseries)] <- c("S1", "S2", "S3")
   
+  color_map <- fewseries %>%
+    distinct(FullName, Color) %>%
+    tibble::deframe()
   # Add sample lines to plot
   g <- g +
     geom_path(data = fewseries,
@@ -50,8 +53,8 @@ Quantiles_plot <- function(quantiles, Data, selectedsamples, facet, ylab, sessio
     ylim(0, NA) +
     theme_classic() +
     guides(color = "none", fill = "none") +
-    scale_color_manual(values = fewseries$Color) +
-    scale_fill_manual(values = fewseries$Color) +
+    scale_color_manual(values = color_map) +
+    scale_fill_manual(values = color_map)+
     theme(
       title = element_text(size = title_size),
       axis.title = element_text(size = axistitle_size),
@@ -60,6 +63,5 @@ Quantiles_plot <- function(quantiles, Data, selectedsamples, facet, ylab, sessio
       legend.text = element_text(size = text_size),
       strip.text = element_text(size = title_size)
     )
-  
   return(g)
 }
