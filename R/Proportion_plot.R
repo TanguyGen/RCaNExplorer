@@ -18,7 +18,7 @@ Proportion_plot <- function(Data, info, session) {
     mutate(Year = as.numeric(Year))
   
   g <- ggplot(Data, aes(x = Year, y = proportion, fill = target)) +
-    geom_bar(stat = "identity", width = 1) +
+    geom_bar(stat = "identity", width = 1, colour="black") +
     labs(
       y = "",
       x = "Year"
