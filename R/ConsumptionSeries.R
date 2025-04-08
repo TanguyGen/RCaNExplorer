@@ -1,5 +1,7 @@
 #' @import dplyr
 #' @import tidyr
+#' @import ggplot2
+#' @import patchwork
 ConsumptionSeries <- function(Data,
                               param,
                               info,
@@ -74,7 +76,7 @@ ConsumptionSeries <- function(Data,
         pull(FullName)
       
       p1 <- Quantiles_plot(quantiles, Data_total, selectedsamples, facet, ylab, session = session) +
-        ggplot2::ggtitle(name)
+        ggtitle(name)
       
       p2 <- Proportion_plot(Data_byprey, info = info, session = session)
       
@@ -90,12 +92,12 @@ ConsumptionSeries <- function(Data,
   width <- session$clientData$output_Graphs_width
   bigtitle_size <- max(ceiling(width / 20), 40)
   
-  patchwork::wrap_plots(listplot, ncol = 1) +
-    patchwork::plot_annotation(
+  wrap_plots(listplot, ncol = 1) +
+    plot_annotation(
       title = paste("Consumption by", paste(Names, collapse = ", ")),
-      theme = ggplot2::theme(
-        text = ggplot2::element_text(size = bigtitle_size),
-        plot.margin = ggplot2::margin(70, 10, 50, 10)
+      theme = theme(
+        text = element_text(size = bigtitle_size),
+        plot.margin = margin(70, 10, 50, 10)
       )
     )
 }
