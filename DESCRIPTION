@@ -12,7 +12,7 @@ Imports:
     dplyr,
     ggplot2,
     golem,
-    patchwork,
+    patchwork (>= 1.1.1),
     purrr,
     shiny,
     shinycssloaders,
