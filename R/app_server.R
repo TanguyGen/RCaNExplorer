@@ -146,7 +146,7 @@ app_server <- function(input, output, session) {
   observeEvent(input$selected_type, {
     if (input$selected_type == "node") {
       updateSelectInput(session, "Typegraph",
-                               choices = c("Select an option...", "Biomass Series", "Consumption Series", "Predation and Catch Series", "Ratio Consumption/Biomass"),
+                               choices = c("Select an option...", "Biomass Series", "Consumption Series", "Predation and Catch Series", "Ratio Consumption/Biomass","Ratio Production/Biomass"),
                                selected = "Select an option..."
       )
     } else if (input$selected_type == "edge") {
@@ -193,16 +193,24 @@ app_server <- function(input, output, session) {
       BiomassSeries(data$CaNSample_long, ecosystem_components, info = Info_table, group = input$groupspecies, grouplabel = input$groupname, session = session)
       
     } else if (input$Typegraph == "Consumption Series") {
+      
       ConsumptionSeries(data$CaNSample_long, ecosystem_components, info = Info_table, group = input$groupspecies, grouplabel = input$groupname, session = session)
       
     } else if (input$Typegraph == "Predation and Catch Series") {
+      
       PredationSeries(data$CaNSample_long, ecosystem_components, info = Info_table, group = input$groupspecies, grouplabel = input$groupname, session = session)
       
     } else if (input$Typegraph == "Flux Series") {
+      
       FluxSerie(data$CaNSample_long, ecosystem_components, info = Info_table, session = session)
       
     } else if (input$Typegraph == "Ratio Consumption/Biomass") {
+      
       RatioConsumptionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, group= input$groupspecies,session = session)
+      
+    } else if (input$Typegraph == "Ratio Production/Biomass") {
+      
+      RatioProductionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, group= input$groupspecies,session = session)
     }
   })
   

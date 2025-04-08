@@ -1,4 +1,3 @@
-
 #' @import dplyr
 #' @import tidyr
 BiomassSeries <- function(Data,
