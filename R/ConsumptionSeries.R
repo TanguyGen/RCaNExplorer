@@ -11,6 +11,10 @@ ConsumptionSeries <- function(Data,
                               facet = FALSE,
                               session) {
   
+  if (!requireNamespace("patchwork", quietly = TRUE)) {
+    stop("Please install the 'patchwork' package to use this function.")
+  }
+  
   # Select sample lines for overlay
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
