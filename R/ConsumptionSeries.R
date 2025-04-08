@@ -11,7 +11,7 @@ ConsumptionSeries <- function(Data,
                               facet = FALSE,
                               session) {
   
-  if (!requireNamespace("patchwork", quietly = TRUE)) {
+  if (requireNamespace("patchwork", quietly = TRUE)) {
     stop(paste(packageVersion("patchwork")))
   }
   library(patchwork)  # Ensures patchwork is loaded
