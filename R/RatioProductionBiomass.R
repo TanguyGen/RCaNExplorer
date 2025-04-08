@@ -20,7 +20,7 @@ RatioProductionBiomass<- function(Data,
     rename(series = Var, biomass = value)
   
   Productions <- Data %>%
-    filter(stringr::str_detect(Var, paste0("_(", paste(param, collapse = "|"), ")$"))) %>%
+    filter(stringr::str_detect(Var, paste0("^(", paste(param, collapse = "|"), ")_"))) %>%
     mutate(
       Prey = stringr::word(Var, 1, sep = "_"),
       Predator = stringr::word(Var, 2, sep = "_")

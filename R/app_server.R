@@ -206,11 +206,11 @@ app_server <- function(input, output, session) {
       
     } else if (input$Typegraph == "Ratio Consumption/Biomass") {
       
-      RatioConsumptionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, group= input$groupspecies,session = session)
+      RatioConsumptionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, group= input$groupspecies,grouplabel=input$groupname,session = session)
       
     } else if (input$Typegraph == "Ratio Production/Biomass") {
       
-      RatioProductionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, group= input$groupspecies,session = session)
+      RatioProductionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, group= input$groupspecies,grouplabel=input$groupname,session = session)
     }
   })
   
