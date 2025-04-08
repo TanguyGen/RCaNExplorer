@@ -1,13 +1,27 @@
+#' Quantiles Plot with Confidence Intervals and Random trajectories
+#'
+#' This function generates a plot with confidence ribbons for quantiles (0%, 2.5%, 25%, 50%, 75%, 97.5%, 100%)
+#' and sample lines representing selected data. It includes options to facet the plot and customize axis labels.
+#'
+#' @param quantiles A data frame containing quantile values (e.g., q0, q2.5, q25, q50, q75, q97.5, q100). Must include columns `Year`, `FullName`, and the quantiles.
+#' @param Data RCaNSample_long data-frame computed from the RData RCaNSample.
+#' @param selectedsamples A vector of random trajectories IDs (e.g., 1, 2, 3) that will be used to plot trajectories.
+#' @param facet A logical value indicating whether the plot should be faceted by `FullName`.
+#' @param ylab A character string for the label of the y-axis.
+#' @param session The Shiny session object, passed to retrieve the width of the plot area from the client.
+#'
+#' @return A ggplot2 object that contains the quantiles plot, including confidence ribbons and sample lines.
+#'
 #' @import dplyr
 #' @import tidyr
 #' @import ggplot2
 
 Quantiles_plot <- function(quantiles, Data, selectedsamples, facet, ylab, session) {
   
-  width <- session$clientData$output_Plots_width
-  title_size <- max(ceiling(width / 40), 16)
-  axistitle_size <- max(ceiling(width / 60), 12)
-  text_size <- max(ceiling(width / 80), 12)
+  width <- session$clientData$output_Plots_width # Get the width of the plot from the session to adjust text sizes accordingly
+  title_size <- max(ceiling(width / 40), 16)  # Adjust title size based on plot width
+  axistitle_size <- max(ceiling(width / 60), 12)  # Adjust axis title size
+  text_size <- max(ceiling(width / 80), 12)  # Adjust axis text size
   
   # Base plot with confidence ribbons
   g <- ggplot() +
