@@ -1,7 +1,6 @@
 #' @import dplyr
 #' @import tidyr
 #' @import ggplot2
-#' @importFrom patchwork plot_layout
 
 ConsumptionSeries <- function(Data,
                               param,
