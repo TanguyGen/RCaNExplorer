@@ -1,6 +1,7 @@
 #' @import dplyr
 #' @import tidyr
 #' @import ggplot2
+#' @import patchwork
 
 ConsumptionSeries <- function(Data,
                               param,
@@ -11,10 +12,6 @@ ConsumptionSeries <- function(Data,
                               facet = FALSE,
                               session) {
   
-  if (requireNamespace("patchwork", quietly = TRUE)) {
-    stop(paste(packageVersion("patchwork")))
-  }
-  library(patchwork)  # Ensures patchwork is loaded
   
   # Select sample lines for overlay
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)

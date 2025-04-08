@@ -25,7 +25,7 @@ golem::fill_desc(
   authors = person(
     given = "Tanguy", # Your First Name
     family = "Genthon", # Your Last Name
-    email = "anguy.genthon@hi.no", # Your email
+    email = "tanguy.genthon@hi.no", # Your email
     role = c("aut", "cre") # Your role (here author/creator)
   ),
   repo_url = "https://github.com/TanguyGen/RCaNvisualtool/", # The URL of the GitHub repo (optional),

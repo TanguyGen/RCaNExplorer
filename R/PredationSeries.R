@@ -1,6 +1,7 @@
 #' @import dplyr
 #' @import tidyr
 #' @import ggplot2
+#' @import patchwork
 
 PredationSeries <- function(Data,
                             param,
