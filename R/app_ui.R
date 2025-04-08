@@ -19,7 +19,7 @@ app_ui <- function(request) {
           class = "header",
           checked = NA,
           h1(),
-          h2("RCaN Visual Tool")
+          h2("RCaN Explorer")
         )
       }),
       

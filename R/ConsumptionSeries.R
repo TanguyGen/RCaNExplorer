@@ -2,6 +2,7 @@
 #' @import tidyr
 #' @import ggplot2
 #' @import patchwork
+
 ConsumptionSeries <- function(Data,
                               param,
                               info,
