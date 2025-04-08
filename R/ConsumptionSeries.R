@@ -93,12 +93,14 @@ ConsumptionSeries <- function(Data,
   width <- session$clientData$output_Graphs_width
   bigtitle_size <- max(ceiling(width / 20), 40)
   
-  wrap_plots(listplot, ncol = 1) +
-    plot_annotation(
+  plot_result<-patchwork::wrap_plots(listplot, ncol = 1) +
+    patchwork::plot_annotation(
       title = paste("Consumption by", paste(Names, collapse = ", ")),
       theme = theme(
         text = element_text(size = bigtitle_size),
         plot.margin = margin(70, 10, 50, 10)
       )
     )
+  
+  return(plot_result)
 }

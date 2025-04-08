@@ -112,8 +112,8 @@ PredationSeries <- function(Data,
   bigtitle_size <- max(ceiling(width / 20), 20)
   
   # Combine all plots into one layout and add a title
-  plot_result <- wrap_plots(listplot, ncol = 1) + 
-    plot_annotation(
+  plot_result <- patchwork::wrap_plots(listplot, ncol = 1) + 
+    patchwork::plot_annotation(
       title = paste("Predation on", paste(Names, collapse = ", ")),
       theme = theme(
         text = element_text(size = bigtitle_size),
