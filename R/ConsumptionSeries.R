@@ -11,8 +11,6 @@ ConsumptionSeries <- function(Data,
                               facet = FALSE,
                               session) {
   
-  print(version(patchwork))
-  
   # Select sample lines for overlay
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
@@ -94,8 +92,8 @@ ConsumptionSeries <- function(Data,
   width <- session$clientData$output_Graphs_width
   bigtitle_size <- max(ceiling(width / 20), 40)
   
-  plot_result<-patchwork::wrap_plots(listplot, ncol = 1) +
-    patchwork::plot_annotation(
+  plot_result<-wrap_plots(listplot, ncol = 1) +
+    plot_annotation(
       title = paste("Consumption by", paste(Names, collapse = ", ")),
       theme = theme(
         text = element_text(size = bigtitle_size),
