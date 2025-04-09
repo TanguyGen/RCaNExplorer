@@ -17,6 +17,7 @@
 #'
 #' @import dplyr
 #' @import tidyr
+#' @import data.table
 
 BiomassSeries <- function(Data,
                           param,
@@ -35,10 +36,10 @@ BiomassSeries <- function(Data,
   info <- info %>%
     rename(series = ID)
   
+  Data<-data.table(Data)
+  
   # Filter the data to include only biomasses of targeted species
-  Filtered_data <- Data %>%
-    filter(Var %in% param) %>%
-    rename(series = Var)
+  Filtered_data <- Data[Var %in% param, .(series = Var, value = value,Year=Year,Sample_id=Sample_id)]
   
   # If no matching data is found, stop and display an error message
   if (nrow(Filtered_data) == 0) 

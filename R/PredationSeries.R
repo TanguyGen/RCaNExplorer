@@ -20,7 +20,8 @@
 #' @import tidyr
 #' @import ggplot2
 #' @import patchwork
-#'
+#' @import data.table
+#' 
 PredationSeries <- function(Data,
                             param,
                             info,
@@ -37,11 +38,21 @@ PredationSeries <- function(Data,
   info <- info %>%
     rename(series = ID)
   
-  # Filter the data to include only rows with containing the fluxes from the targeted species
-  Filtered_data <- Data %>%
-    filter(stringr::str_detect(Var, paste0("^(", paste(param, collapse = "|"), ")_"))) %>%  #Select all flux with the pattern <Targeted species>_<Predator>
-    mutate(target = stringr::word(Var, 2, sep = "_"),  # Extract the target (prey)
-           series = stringr::word(Var, 1, sep = "_"))  # Extract the series (predator)
+  # Transform to data.table for faster computing
+  Data <- data.table::as.data.table(Data)
+  
+  #  Create the patterns of interest <Prey>_<Targeted species>
+  pattern <- paste0("^(", paste(param, collapse = "|"), ")_") #Get the patterns of interest <Targeted species>_<Predator>
+  
+  # Filter the data to include only rows with containing the fluxes to the targeted species
+  Filtered_data <- Data[
+    grepl(pattern, Var),  # Use grepl for faster pattern matching
+    .(target = tstrsplit(Var, "_")[[2]],  # Extract the target (predator)
+      series = tstrsplit(Var, "_")[[1]],  # Extract the series (prey)
+      Year=Year, #Keep the other variables in the Data
+      Sample_id=Sample_id,
+      value=value)
+  ]
   
   # If no matching data is found, stop and display an error message
   if (nrow(Filtered_data) == 0) 

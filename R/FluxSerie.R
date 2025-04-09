@@ -16,6 +16,7 @@
 #'
 #' @import dplyr
 #' @import tidyr
+#' @import data.table
 
 FluxSerie <- function(Data,
                       param,
@@ -30,24 +31,39 @@ FluxSerie <- function(Data,
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
   
-  Filtered_data <- Data %>%
-    filter(Var %in% param) %>% # Select only the fluxes is in the provided fluxes list
-    rename(series = Var) %>%
-    separate(series, sep = "_", into = c("ID", "Predator"), remove = FALSE) %>% # Separate series into prey and predator
-    left_join(info, by = "ID") %>%  # Join species information for prey
-    mutate(  
-      PreyName = FullName, # Store the prey name
-      Prey = ID, # Store the prey ID
-      ID = Predator  # Switch the ID to the predator's ID for the next join
-    ) %>%
-    select(-c(FullName, Color)) %>%
-    left_join(info, by = "ID") %>%  # Join species information for predator
-    mutate(
-      Predator = ID,  # Store the predator ID
-      PredatorName = FullName,  # Store the predator name
-      FullName = paste0("From ", PreyName, " to ", PredatorName),  # Create a descriptive name for the flux
-      Color = "#27548A"  # Set a hard-coded color for all flux arrows
-    )
+  # Ensure both Data and info are data.tables
+  Data <- as.data.table(Data)
+  info <- as.data.table(info)
+  
+  # Filter only needed rows
+  Filtered_data <- Data[Var %in% param]
+  
+  # Split Var into Prey (ID) and Predator
+  Filtered_data[, c("ID", "Predator") := tstrsplit(Var, "_")]
+  
+  # Join species info for Prey
+  Filtered_data <- merge(Filtered_data, info, by = "ID", all.x = TRUE)
+  Filtered_data[, `:=`(
+    PreyName = FullName,
+    Prey = ID,
+    ID = Predator  # Update ID to Predator ID for next join
+  )]
+  
+  # Drop unused columns before next merge
+  Filtered_data[, c("FullName", "Color") := NULL]
+  
+  # Join species info for Predator
+  Filtered_data <- merge(Filtered_data, info, by = "ID", all.x = TRUE)
+  # Final assignments
+  Filtered_data[, `:=`(
+    Predator = ID,
+    PredatorName = FullName,
+    Color = "#27548A"
+  )]
+  
+  Filtered_data[, `:=`(
+    FullName = paste0("From ", PreyName, " to ", PredatorName)
+  )]
   
   # Check if the data contains any valid fluxes, stop with an error message if not
   if (nrow(Filtered_data) == 0) {

@@ -20,6 +20,7 @@
 #' @import tidyr
 #' @import ggplot2
 #' @import patchwork
+#' @import data.table
 #'
 #'
 ConsumptionSeries <- function(Data,
@@ -33,19 +34,25 @@ ConsumptionSeries <- function(Data,
   
   # Select a few sample lines for overlay in the plot
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
-  
   # Rename the ID to a value compatible with the data for further left_join
   info <- info %>%
     rename(series = ID)
   
-  # Filter the data to include only rows with containing the fluxes to the targeted species
-  Filtered_data <- Data %>%
-    filter(stringr::str_detect(Var, paste0("_(", paste(param, collapse = "|"), ")$"))) %>% #Select all flux with the pattern <Prey>_<Targeted species>
-    mutate(
-      target = stringr::word(Var, 1, sep = "_"),  # Extract the target (prey)
-      series = stringr::word(Var, 2, sep = "_")  # Extract the series (predator)
-    )
+  # Transform to data.table for faster computing
+  Data <- data.table::as.data.table(Data)
   
+  #  Create the patterns of interest <Prey>_<Targeted species>
+  pattern <- paste0("_(", paste(param, collapse = "|"), ")$")
+  
+  # Filter the data to include only rows with containing the fluxes from the targeted species
+  Filtered_data <- Data[
+    grepl(pattern, Var),  # Use grepl for faster pattern matching
+    .(target = tstrsplit(Var, "_")[[1]],  # Extract the target (prey)
+      series = tstrsplit(Var, "_")[[2]],  # Extract the series (predator)
+      Year=Year, #Keep the other variables in the Data
+      Sample_id=Sample_id,
+      value=value)
+  ]
   # If no matching data is found, stop and display an error message
   if (nrow(Filtered_data) == 0) 
     stop("param not recognized")

@@ -140,11 +140,8 @@ app_server <- function(input, output, session) {
           }
         }"
       ) %>%
-      visNetwork::visPhysics(stabilization = TRUE, enable = FALSE) %>%  #Don't allow the entire network to move when moving a node
-      visNetwork::visNodes(font = list(size = 20), shapeProperties = list(useImageSize = TRUE)) %>%  #Use the image sizes and increase the font of the labels
-      visNetwork::visEvents(
-        stabilizationIterationsDone = "function() { this.physics.physicsEnabled = false; }"
-      )
+      visNetwork::visPhysics( enable = FALSE) %>%  #Don't allow the entire network to move when moving a node
+      visNetwork::visNodes(font = list(size = 20), shapeProperties = list(useImageSize = TRUE)) #Use the image sizes and increase the font of the labels
   })
   
   #Put the positions of the nodes into a reactive values to save them later
@@ -196,7 +193,7 @@ app_server <- function(input, output, session) {
   
   #Plot the data depending on which choice of visualisation we made and save the plot into a reactive object
   plot_obj <- reactive({
-    req(input$selected_components)
+    req(input$Typegraph,input$selected_components)
     
     ecosystem_components <- input$selected_components
     

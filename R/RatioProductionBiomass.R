@@ -21,6 +21,7 @@
 #' @import dplyr
 #' @import tidyr
 #' @import ggplot2
+#' @import data.table
 
 RatioProductionBiomass<- function(Data,
                                    param,
@@ -39,22 +40,25 @@ RatioProductionBiomass<- function(Data,
   info<-info%>%
     rename(series=ID)
   
-  #Get the Biomass of each selected species
-  Biomasses <- Data %>%
-    filter(Var %in% param)%>%
-    rename(series = Var, biomass = value)
+  # Transform to data.table for faster computing
+  Data <- data.table::as.data.table(Data)
   
-  #Get the production of each selected species by summing the value of fluxes leaving the targets
-  Productions <- Data %>%
-    filter(stringr::str_detect(Var, paste0("^(", paste(param, collapse = "|"), ")_"))) %>% #Select all flux with the pattern <Targeted species>_<Predator>
-    mutate( #Create 2 columns with the names of the Preys and Predators
-      Prey = stringr::word(Var, 1, sep = "_"),
-      Predator = stringr::word(Var, 2, sep = "_")
-    )%>%
-    group_by(Prey,Year,Sample_id) %>%
-    summarise(production = sum(value), .groups = "drop") %>% #Sum the leaving fluxes for each species
-    rename(series = Prey)
-
+  #Get the Biomass of each selected species
+  Biomasses <- Data[Var %in% param, .(series = Var, biomass = value,Year=Year,Sample_id=Sample_id)]
+  
+  #  Create the patterns of interest <Prey>_<Targeted species>
+  pattern <- paste0("^(", paste(param, collapse = "|"), ")_") #Get the patterns of interest <Prey>_<Targeted species>
+  
+  # Filter the data to include only rows with containing the fluxes to the targeted species
+  Productions <- Data[
+    grepl(pattern, Var),  # Use grepl for pattern matching
+    .(series = tstrsplit(Var, "_")[[1]],  # Extract the Prey
+      Predator = tstrsplit(Var, "_")[[2]],  # Extract the Predator
+      value = value,
+      Year=Year,
+      Sample_id=Sample_id)
+  ]
+  Productions <- Productions[, .(production = sum(value)), by = .(series, Year, Sample_id)] #sum the values of predators
   # Merge the tables
   merged_data <- full_join(Biomasses, Productions, by = c("series","Year","Sample_id")) %>% #Join the biomasses and productions for each species
     replace_na(list(biomass = 0, production = 0))%>%
