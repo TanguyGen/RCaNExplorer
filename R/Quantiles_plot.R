@@ -16,8 +16,12 @@
 #' @import tidyr
 #' @import ggplot2
 
-Quantiles_plot <- function(quantiles, Data, selectedsamples, facet, ylab, session) {
-  
+Quantiles_plot <- function(quantiles,
+                           Data,
+                           selectedsamples,
+                           facet,
+                           ylab,
+                           session) {
   width <- session$clientData$output_Plots_width # Get the width of the plot from the session to adjust text sizes accordingly
   title_size <- max(ceiling(width / 40), 16)  # Adjust title size based on plot width
   axistitle_size <- max(ceiling(width / 60), 12)  # Adjust axis title size
@@ -26,19 +30,36 @@ Quantiles_plot <- function(quantiles, Data, selectedsamples, facet, ylab, sessio
   # Base plot with confidence ribbons
   g <- ggplot() +
     geom_ribbon(data = quantiles,
-                         aes(x = Year, ymin = q0, ymax = q100, fill = FullName),
-                         alpha = 0.33) +
+                aes(
+                  x = Year,
+                  ymin = q0,
+                  ymax = q100,
+                  fill = FullName
+                ),
+                alpha = 0.33) +
+    geom_ribbon(
+      data = quantiles,
+      aes(
+        x = Year,
+        ymin = q2.5,
+        ymax = q97.5,
+        fill = FullName
+      ),
+      alpha = 0.33
+    ) +
     geom_ribbon(data = quantiles,
-                         aes(x = Year, ymin = q2.5, ymax = q97.5, fill = FullName),
-                         alpha = 0.33) +
-    geom_ribbon(data = quantiles,
-                         aes(x = Year, ymin = q25, ymax = q75, fill = FullName),
-                         alpha = 0.33) +
+                aes(
+                  x = Year,
+                  ymin = q25,
+                  ymax = q75,
+                  fill = FullName
+                ),
+                alpha = 0.33) +
     ylab(ylab)
   
   # Facet option
   if (facet) {
-    g <- g + facet_wrap(~FullName, scales = "free", ncol = 1)
+    g <- g + facet_wrap( ~ FullName, scales = "free", ncol = 1)
   }
   
   # Prepare sample lines
@@ -56,19 +77,19 @@ Quantiles_plot <- function(quantiles, Data, selectedsamples, facet, ylab, sessio
   # Add sample lines to plot
   g <- g +
     geom_path(data = fewseries,
-                       aes(x = Year, y = S1, color = FullName),
-                       lty = "solid") +
+              aes(x = Year, y = S1, color = FullName),
+              lty = "solid") +
     geom_path(data = fewseries,
-                       aes(x = Year, y = S2, color = FullName),
-                       lty = "twodash") +
+              aes(x = Year, y = S2, color = FullName),
+              lty = "twodash") +
     geom_path(data = fewseries,
-                       aes(x = Year, y = S3, color = FullName),
-                       lty = "longdash") +
+              aes(x = Year, y = S3, color = FullName),
+              lty = "longdash") +
     ylim(0, NA) +
     theme_classic() +
     guides(color = "none", fill = "none") +
     scale_color_manual(values = color_map) +
-    scale_fill_manual(values = color_map)+
+    scale_fill_manual(values = color_map) +
     theme(
       title = element_text(size = title_size),
       axis.title = element_text(size = axistitle_size),
