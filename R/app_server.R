@@ -86,7 +86,8 @@ app_server <- function(input, output, session) {
     
     list_element <- data$CaNSample$CaNmod$components_param$Component #Get the ecosystem components
     
-    existing_images <- list.files("inst/app/www/img")
+    img_dir <- system.file("app/www/img", package = "RCaNExplorer")
+    existing_images <- list.files(img_dir)
     
     #Create the nodes of the foodweb network
     nodes <- tibble::tibble(ID = list_element) %>%

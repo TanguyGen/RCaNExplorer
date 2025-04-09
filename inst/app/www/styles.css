@@ -5,6 +5,7 @@
   font-family: "Playfair Display", serif !important;
   text-align: center;
 }
+
 h3{
   text-align: center;
 }
@@ -28,3 +29,18 @@ div.row {
     .nav-tabs {
       border-bottom: 3px solid #000 !important; /* Thicker underline */
     }
+.well {
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  background-color: #ffffff;
+  padding: 15px;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+#sidebar {
+  border: none;
+  background: none;
+  box-shadow: none;
+}
