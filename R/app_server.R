@@ -77,7 +77,8 @@ app_server <- function(input, output, session) {
     
     existing_images<-list.files("inst/app/www/img")
 
-    nodes <- tibble::tibble(ID = list_element) %>% #Create the nodes of the foodweb network
+    #Create the nodes of the foodweb network
+    nodes <- tibble::tibble(ID = list_element) %>% 
       left_join(Info_table) %>%
       mutate(
         id = ID, #Give them an ID
@@ -85,32 +86,35 @@ app_server <- function(input, output, session) {
           input$show_node_labels ~ id,
           TRUE ~ ""
         ),
-        shape = case_when(
+        shape = case_when( #If there is an image existig for the id, put an image else, a sphere
           paste0(id,".png") %in% existing_images ~ "image",
           TRUE ~ "dot"
         ),
-        image = sprintf("www/img/%s.png", id),
-        x = data$CaNSample$CaNmod$components_param$X * 1000,
+        image = sprintf("www/img/%s.png", id), #Images are in inst/app/www in the format <ID>.png
+        x = data$CaNSample$CaNmod$components_param$X * 1000, #Get the x and y in a bigger scale to have more space between nodes
         y = data$CaNSample$CaNmod$components_param$Y * 1000,
-        font.bold = case_when(
+        font.bold = case_when( #Put a bigger font for species inside the model domain, resolved in terms of biomass ad fluxes
           Biomass ~ 22,
           !Biomass ~ 14
         )
       )
-    edges <- tibble::tibble(id = paste0(data$CaNSample$CaNmod$fluxes_def$From, "_", data$CaNSample$CaNmod$fluxes_def$To)) %>%
+    #Create the links between the nodes
+    edges <- tibble::tibble(id = paste0(data$CaNSample$CaNmod$fluxes_def$From, "_", data$CaNSample$CaNmod$fluxes_def$To)) %>% #Get the list of consumers and predator and bind them into one variable
       mutate(
         label = case_when(
-          input$show_edge_labels ~ id,
+          input$show_edge_labels ~ id, #Show the id as label only when the user chose to show the labels
           TRUE ~ ""
         ),
         from = data$CaNSample$CaNmod$fluxes_def$From,
         to = data$CaNSample$CaNmod$fluxes_def$To
       )
     
+    #Create the network from the nodes and edges
     visNetwork::visNetwork(nodes, edges) %>%
-      visNetwork::visEdges(arrows = list(to = TRUE)) %>%
-      visNetwork::visInteraction(multiselect = TRUE) %>%
+      visNetwork::visEdges(arrows = list(to = TRUE)) %>% #Put arrows to show the direction of the fluxes
+      visNetwork::visInteraction(multiselect = TRUE) %>% #Allow the selection of multiple elements at once (clicking ctl or cmd)
       visNetwork::visEvents(
+        #Save the selected nodes id into input$selectedNodes
         selectNode = "function(nodes) {
           var selectedNodes = this.getSelectedNodes();
           if (selectedNodes.length > 0) {
@@ -119,6 +123,7 @@ app_server <- function(input, output, session) {
             console.log('Node selected:', selectedNodes);
           }
         }",
+        #Save the selected edges id into input$selectedEdges
         selectEdge = "function(edges) {
           var selectedEdges = this.getSelectedEdges();
           if (selectedEdges.length > 0 && this.getSelectedNodes().length === 0) {
@@ -127,6 +132,7 @@ app_server <- function(input, output, session) {
             console.log('Edge selected:', selectedEdges);
           }
         }",
+        #Save the positions of the nodes when moved into input$positions
         dragEnd = "function(params) {
           if (params.nodes.length > 0) {
             var positions = this.getPositions();
@@ -134,8 +140,8 @@ app_server <- function(input, output, session) {
           }
         }"
       ) %>%
-      visNetwork::visPhysics(stabilization = TRUE, enable = FALSE) %>%
-      visNetwork::visNodes(font = list(size = 20), shapeProperties = list(useImageSize = TRUE)) %>%
+      visNetwork::visPhysics(stabilization = TRUE, enable = FALSE) %>%  #Don't allow the entire network to move when moving a node
+      visNetwork::visNodes(font = list(size = 20), shapeProperties = list(useImageSize = TRUE)) %>%  #Use the image sizes and increase the font of the labels
       visNetwork::visEvents(
         stabilizationIterationsDone = "function() { this.physics.physicsEnabled = false; }"
       )
@@ -157,7 +163,7 @@ app_server <- function(input, output, session) {
   })
   
 
-  
+  #Depending if we select a node, an edge or nothing give graph options
   observeEvent(input$selected_type, {
     if (input$selected_type == "node") {
       updateSelectInput(session, "Typegraph",
@@ -177,25 +183,29 @@ app_server <- function(input, output, session) {
     }
   })
   
+  #Download the current CaNSample file with new positions
   output$savedata <- downloadHandler(
-    filename = "CaNSample.RData",
+    filename = "CaNSample.RData", #Name of the saved RData file
     content = function(file) {
       CaNSample <- data$CaNSample
-      CaNSample$CaNmod$components_param$X <- Positions$x
+      CaNSample$CaNmod$components_param$X <- Positions$x #Assign the saved positions to the CaNSample
       CaNSample$CaNmod$components_param$Y <- Positions$y
-      save(CaNSample, file = file)
+      save(CaNSample, file = file)  #We call CaNSample the variable inside of RData
     }
   )
   
+  #Plot the data depending on which choice of visualisation we made and save the plot into a reactive object
   plot_obj <- reactive({
     req(input$selected_components)
     
     ecosystem_components <- input$selected_components
     
+    #Plot Series of biomass
     if (input$Typegraph == "Biomass Series") {
-      Biomasscheck <- filter(Info_table, ID %in% input$selected_components)
       
-      if (!all(Biomasscheck$Biomass)) {
+      Biomasscheck <- filter(Info_table, ID %in% input$selected_components) #Get the metadata to check if the biomass of the nodes is resolved
+      
+      if (!all(Biomasscheck$Biomass)) { #If some nodes biomass are not resolved, make a notification showing which ones were not represented
         showNotification(
           paste0(
             "The biomass of ",
@@ -204,31 +214,32 @@ app_server <- function(input, output, session) {
           )
         )
       }
-      
+      #Call the function to create Biomass plots
       BiomassSeries(data$CaNSample_long, ecosystem_components, info = Info_table, group = input$groupspecies, grouplabel = input$groupname, session = session)
       
-    } else if (input$Typegraph == "Consumption Series") {
-      
+    } else if (input$Typegraph == "Consumption Series") { 
+      #Call the function to create Consumptions plots
       ConsumptionSeries(data$CaNSample_long, ecosystem_components, info = Info_table, group = input$groupspecies, grouplabel = input$groupname, session = session)
       
     } else if (input$Typegraph == "Predation and Catch Series") {
-      
+      #Call the function to create Predation plots
       PredationSeries(data$CaNSample_long, ecosystem_components, info = Info_table, group = input$groupspecies, grouplabel = input$groupname, session = session)
       
     } else if (input$Typegraph == "Flux Series") {
-      
+      #Call the function to create fluxes plots
       FluxSerie(data$CaNSample_long, ecosystem_components, info = Info_table, session = session)
       
     } else if (input$Typegraph == "Ratio Consumption/Biomass") {
-      
+      #Call the function to create Ratio Consumption/Biomass plots
       RatioConsumptionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, group= input$groupspecies,grouplabel=input$groupname,session = session)
       
     } else if (input$Typegraph == "Ratio Production/Biomass") {
-      
+      #Call the function to create Ratio Production/Biomass plots
       RatioProductionBiomass(data$CaNSample_long, ecosystem_components, info = Info_table, group= input$groupspecies,grouplabel=input$groupname,session = session)
     }
   })
   
+  #Render the plot from the reactive value plot_obj
   output$Plots <- renderPlot({
     plot_obj()
   }, height = reactive({
