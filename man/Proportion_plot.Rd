@@ -17,6 +17,6 @@ Proportion_plot(Data, info, session)
 A ggplot object representing the proportion bar plot.
 }
 \description{
-Creates a bar plot showing the proportion of the value of each targetted species relative to the total for each year. 
+Creates a bar plot showing the proportion of the value of each targetted species relative to the total for each year.
 This function makes proportion plots for the functions ConsumptionSeries and ProductionSeries.
 }

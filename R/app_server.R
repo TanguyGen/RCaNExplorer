@@ -324,5 +324,5 @@ app_server <- function(input, output, session) {
       width * ceiling(num_plots / 2)
   }))
   
-  outputOptions(output, "Plots", suspendWhenHidden = FALSE)#Keep running the plot code even when we are not on the plot window
+  #outputOptions(output, "Plots", suspendWhenHidden = FALSE)#Keep running the plot code even when we are not on the plot window
 }

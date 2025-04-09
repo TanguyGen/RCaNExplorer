@@ -39,6 +39,6 @@ BiomassSeries(
 A `ggplot` object that visualizes the biomass data for the selected species, showing quantiles over time.
 }
 \description{
-This function calculates and visualizes biomass data over time for a set of species. It generates a plot 
+This function calculates and visualizes biomass data over time for a set of species. It generates a plot
 showing quantiles of biomass for each species over the years.
 }

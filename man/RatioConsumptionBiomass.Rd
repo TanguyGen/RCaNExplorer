@@ -19,10 +19,10 @@ RatioConsumptionBiomass(
 \arguments{
 \item{Data}{RCaNSample_long data-frame computed from the RData RCaNSample}
 
-\item{param}{A character vector containing the species for which the biomass and consumption 
+\item{param}{A character vector containing the species for which the biomass and consumption
 ratios will be calculated.}
 
-\item{info}{A data frame containing metadata about the species, including columns like `ID`, 
+\item{info}{A data frame containing metadata about the species, including columns like `ID`,
 `FullName`, `Color`.}
 
 \item{plot_series}{If yes, draw three example of trajectories. Default is `TRUE`.}

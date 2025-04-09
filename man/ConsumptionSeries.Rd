@@ -37,7 +37,7 @@ A `ggplot` object that visualizes the consumption data for the selected species,
         using `patchwork`.
 }
 \description{
-This function calculates and visualizes consumption fluxes over time for a set of species. It generates 
-two plots for each species: one for the quantiles of consumption and another showing the proportion 
+This function calculates and visualizes consumption fluxes over time for a set of species. It generates
+two plots for each species: one for the quantiles of consumption and another showing the proportion
 of each prey item.
 }

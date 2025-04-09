@@ -144,12 +144,12 @@ ConsumptionSeries <- function(Data,
   
   # Adjust the title size based on plot width
   width <- session$clientData$output_Graphs_width
-  bigtitle_size <- max(ceiling(width / 20), 40)
+  bigtitle_size <- max(ceiling(width / 10), 30)
   
   # Combine all individual plots into a single plot with a title
   plot_result <- wrap_plots(listplot, ncol = 1) +
     plot_annotation(
-      title = paste("Consumption by", paste(Names, collapse = ", ")),
+      title = "Consumption series",
       theme = theme(
         text = element_text(size = bigtitle_size),
         plot.margin = margin(70, 10, 50, 10)

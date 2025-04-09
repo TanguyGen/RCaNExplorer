@@ -37,7 +37,7 @@ A `ggplot` object that visualizes the predation data for the selected species, w
         using `patchwork`.
 }
 \description{
-This function calculates and visualizes predation fluxes over time for a set of species. It generates 
-two plots for each species: one for the quantiles of predation and another showing the proportion 
+This function calculates and visualizes predation fluxes over time for a set of species. It generates
+two plots for each species: one for the quantiles of predation and another showing the proportion
 of each predator.
 }
