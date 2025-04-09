@@ -242,7 +242,7 @@ app_server <- function(input, output, session) {
   #Render the plot from the reactive value plot_obj
   output$Plots <- renderPlot({
     plot_obj()
-  }, height = reactive({
+  }, height = reactive({ #Make sure the window size increases with the number of plots shown
     width <- session$clientData$output_Plots_width
     num_plots <- if (input$groupspecies) 1 else length(input$selected_components)
     if (is.null(width)) return(400)
@@ -250,5 +250,5 @@ app_server <- function(input, output, session) {
     if (num_plots == 1) width / 2 else width * ceiling(num_plots / 2)
   }))
   
-  outputOptions(output, "Plots", suspendWhenHidden = FALSE)
+  outputOptions(output, "Plots", suspendWhenHidden = FALSE)#Keep running the plot code even when we are not on the plot window
 }
