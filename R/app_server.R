@@ -278,6 +278,8 @@ app_server <- function(input, output, session) {
         data$CaNSample_long,
         ecosystem_components,
         info = Info_table,
+        group = input$groupspecies,
+        grouplabel = input$groupname,
         session = session
       )
       

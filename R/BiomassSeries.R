@@ -51,10 +51,9 @@ BiomassSeries <- function(Data,
   
   # If grouping is enabled, summarize the data by year and sample ID
   if (group == TRUE) {
-    Filtered_data <- Filtered_data %>%
-      group_by(Year, Sample_id) %>%
-      summarise(value = sum(value), .groups = "drop") %>%
-      mutate(series = grouplabel)  # Set the grouped label for the series
+    Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year, Sample_id)]#Sum the biomasses
+    
+    Filtered_data[, series := grouplabel] # Set the grouped label for the series
     
     # Add the grouped label information to the 'info' data frame
     info <- rbind(

@@ -9,6 +9,7 @@ FluxSerie(
   param,
   info,
   plot_series = TRUE,
+  group,
   grouplabel,
   ylab = "Flux (1000t)",
   facet = TRUE,

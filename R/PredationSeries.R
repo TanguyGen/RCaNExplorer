@@ -61,11 +61,11 @@ PredationSeries <- function(Data,
   
   # If grouping is enabled, summarize the data by targeted species
   if (group == TRUE) {
-    Filtered_data <- Filtered_data %>%
-      group_by(Year, target, Sample_id) %>%
-      summarise(value = sum(value)) %>%
-      ungroup() %>%
-      mutate(series = grouplabel)  # Set the grouped label for the series
+    # Summarize by Year and Sample_id
+    Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year,target, Sample_id)]
+    
+    # Add the 'series' column with grouped label
+    Filtered_data[, series := grouplabel]
     
     # Add the grouped label information to the 'info' data frame
     info <- rbind(info, c(grouplabel, grouplabel, "#27548A", FALSE))

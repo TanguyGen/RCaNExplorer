@@ -22,6 +22,7 @@ FluxSerie <- function(Data,
                       param,
                       info,
                       plot_series = TRUE,
+                      group,
                       grouplabel,
                       ylab = "Flux (1000t)",
                       facet = TRUE,
@@ -46,7 +47,8 @@ FluxSerie <- function(Data,
                        Prey = ID,
                        ID = Predator  # Update ID to Predator ID for next join
                        )]
-                       
+  
+  
   # Drop unused columns before next merge
   Filtered_data[, c("FullName", "Color") := NULL]
   
@@ -58,6 +60,13 @@ FluxSerie <- function(Data,
                        Color = "#27548A")]
   
   Filtered_data[, `:=`(FullName = paste0("From ", PreyName, " to ", PredatorName))]
+  
+  if (group == TRUE) {
+    Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year, Sample_id)]
+    Filtered_data[, `:=`(FullName=grouplabel,
+                         Color="#27548A"
+    )]
+  }
   
   # Check if the data contains any valid fluxes, stop with an error message if not
   if (nrow(Filtered_data) == 0) {
