@@ -77,17 +77,17 @@ Quantiles_plot <- function(quantiles,
   # Add sample lines to plot
   g <- g +
     geom_path(data = fewseries,
-              aes(x = Year, y = S1, color = FullName),
+              aes(x = Year, y = S1, group = FullName),
               lty = "solid") +
     geom_path(data = fewseries,
-              aes(x = Year, y = S2, color = FullName),
+              aes(x = Year, y = S2, group = FullName),
               lty = "twodash") +
     geom_path(data = fewseries,
-              aes(x = Year, y = S3, color = FullName),
+              aes(x = Year, y = S3, group = FullName),
               lty = "longdash") +
     ylim(0, NA) +
     theme_classic() +
-    guides(color = "none", fill = "none") +
+    guides(group = "none", fill = "none") +
     scale_color_manual(values = color_map) +
     scale_fill_manual(values = color_map) +
     theme(

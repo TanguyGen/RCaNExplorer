@@ -38,7 +38,7 @@ app_server <- function(input, output, session) {
       #If no RCaN file in input and no foodweb already downloaded, input a standard food web
       e <- new.env()#Create a new environment
       
-      if (!file.exists("Data/CaNSample20240306.Rdata")) {
+      if (!file.exists("CaNSample20240306.Rdata")) {
         #If the file does not exist, load it from its repository
         load(
           file = url(
@@ -48,7 +48,7 @@ app_server <- function(input, output, session) {
         )
       } else {
         #else, load the existing file
-        load("Data/CaNSample20240306.Rdata", envir = e)
+        load("CaNSample20240306.Rdata", envir = e)
       }
       loaded_objs <- ls(envir = e) # Get all the variables from the environment
       
