@@ -4,9 +4,9 @@
 .Ruserdata
 CaNSample20240306.Rdata
 dockerfile
-rsconnect
+rsconnect/
 .DS_Store
 .Rbuildignore
 inst/app/www/.DS_Store
-dev
-tests
+dev/
+tests/
