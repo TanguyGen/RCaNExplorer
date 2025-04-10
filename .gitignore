@@ -8,3 +8,5 @@ rsconnect
 .DS_Store
 .Rbuildignore
 inst/app/www/.DS_Store
+dev
+tests
