@@ -4,7 +4,7 @@
 ## Installation
 To install the package RCaNEXplorer allowing to run the app use:
 ```
-remotes::install_github("TanguyGen/RCaNvisualtool")
+remotes::install_github("TanguyGen/RCaNExplorer")
 ```
 
 ## Quick Start
