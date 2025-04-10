@@ -1,5 +1,5 @@
 # RCaNvisualtool
-<img src="man/www/logo_rcan.png" align="right" width="220" />
+<img src="inst/app/www/logo_rcan.png" align="right" width="220" />
 
 ## Installation
 To install the package RCaNEXplorer allowing to run the app use:
