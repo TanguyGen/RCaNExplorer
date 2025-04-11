@@ -44,3 +44,11 @@ div.row {
   background: none;
   box-shadow: none;
 }
+
+.help-btn-wrapper .dropdown-menu {
+  padding: 15px;
+  max-width: 300px;
+  font-size: 14px;
+  text-align: right;
+  white-space: normal;
+}

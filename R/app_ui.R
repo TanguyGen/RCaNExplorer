@@ -61,9 +61,28 @@ app_ui <- function(request) {
             id = "main_tabs",
             tabPanel(
               "Network",
-              dropdownButton(inputId = "helpbutton",
-                             label="Help",
-                             icon=icon("fa-question"))%>%
+              div(class = "help-btn-wrapper",
+    dropdownButton(
+      class="dropdown-menu",
+      inputId = "helpbutton",
+      label = NULL,
+      icon = icon("circle-question"),
+      circle = TRUE,
+      tooltip = tooltipOptions(title = "Help"),
+      status = "default",  # optional styling
+      
+      # 👇 Content inside dropdown
+      tags$div(
+        class = "help-btn-wrapper",
+        style = "padding: 10px; max-width: 300px; allign: right;",
+        tags$h4("How to Use"),
+        tags$p("• Upload your CaN RData file using the left panel or use the already implemented one."),
+        tags$p("• Choose one or more species/fluxes from the network. Hold Ctrl/cmd to select multiple at once."),
+        tags$p("• Choose a visualization type."),
+        tags$p("• Move to the plot tab to visualise the outputs.")
+      )
+    )
+),
               visNetwork::visNetworkOutput("Foodweb", height = "80vh")%>% 
               shinycssloaders::withSpinner(type = 6)
             ),
@@ -71,6 +90,10 @@ app_ui <- function(request) {
               "Plots",
               br(),
               plotOutput("Plots", height = "auto") %>% shinycssloaders::withSpinner(type = 6)
+            ),
+            tabPanel(
+              "Metadata",
+              DT::DTOutput("table_info")
             )
           )
         )
