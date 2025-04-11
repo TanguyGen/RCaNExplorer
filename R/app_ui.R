@@ -90,6 +90,10 @@ app_ui <- function(request) {
               "Plots",
               br(),
               plotOutput("Plots", height = "auto") %>% shinycssloaders::withSpinner(type = 6)
+            ),
+            tabPanel(
+              "Metadata",
+              DT::DTOutput("table_info")
             )
           )
         )

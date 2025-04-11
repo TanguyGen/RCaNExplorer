@@ -227,6 +227,8 @@ app_server <- function(input, output, session) {
   plot_obj <- reactive({
     req(input$Typegraph, input$selected_components)
     
+    Info_table<-data$Info
+    
     ecosystem_components <- input$selected_components
     
     #Plot Series of biomass
@@ -321,15 +323,52 @@ app_server <- function(input, output, session) {
     if (is.null(width))
       return(400)
     if (num_plots == 0)
-      return(400)
-    if (num_plots == 1)
-      width / 2
-    else
-      width * ceiling(num_plots / 2)
+      return(400)else if(num_plots==1){
+        return(800)
+      }else{
+        width * ceiling(num_plots/3)
+      }
+    
   }))
   
-  output$table_info <- renderDT({
-    rv$data
+  output$table_info <- DT::renderDT({
+    DT::datatable(
+      data$Info,
+      editable = TRUE,
+      rownames = FALSE,
+      escape = FALSE,
+      options = list(
+        columnDefs = list(
+          list(targets = 2, render = htmlwidgets::JS(
+            "function(data, type, row, meta) {",
+            "  return '<input type=\"color\" value=\"' + data + '\" class=\"color-picker\">';",
+            "}")
+          )
+        )
+      )
+    ) %>%
+      htmlwidgets::onRender("
+        $(document).on('input', '.color-picker', function() {
+          var color = $(this).val();  // Get the new color value
+          var row = $(this).closest('tr').index();  // Get the row index
+          var col = 2;  // The column that contains the color (index 2 in your case)
+          
+          // Update the value in the server-side input (Shiny input)
+          Shiny.onInputChange('color_change', {row: row, color: color});
+        });
+      ")
   })
   
+  # Handle the color change on the server side
+  observeEvent(input$color_change, {
+    row <- input$color_change$row
+    color <- input$color_change$color
+    
+    # Update the color in data$Info
+    data$Info[row, 3] <- color
+    
+    # Print the updated table for debugging
+    print(data$Info)
+  })
 }
+

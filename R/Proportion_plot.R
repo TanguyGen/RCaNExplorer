@@ -47,7 +47,8 @@ Proportion_plot <- function(Data, info, session) {
       axis.title = element_text(size = axistitle_size),
       axis.text = element_text(size = text_size),
       legend.title = element_blank(),
-      legend.text = element_text(size = text_size)
+      legend.text = element_text(size = text_size),
+      aspect.ratio = 1/1
     )
   
   return(g)

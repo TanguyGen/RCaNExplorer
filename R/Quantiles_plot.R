@@ -59,7 +59,7 @@ Quantiles_plot <- function(quantiles,
   
   # Facet option
   if (facet) {
-    g <- g + facet_wrap( ~ FullName, scales = "free", ncol = 1)
+    g <- g + facet_wrap( ~ FullName, scales = "free", ncol = 2)
   }
   
   # Prepare sample lines
@@ -96,7 +96,8 @@ Quantiles_plot <- function(quantiles,
       axis.text = element_text(size = text_size),
       legend.title = element_text(size = axistitle_size),
       legend.text = element_text(size = text_size),
-      strip.text = element_text(size = title_size)
+      strip.text = element_text(size = title_size),
+      aspect.ratio = 1/1
     )
   return(g)
 }

@@ -153,8 +153,7 @@ ConsumptionSeries <- function(Data,
     plot_annotation(
       title = "Consumption series",
       theme = theme(
-        text = element_text(size = bigtitle_size),
-        plot.margin = margin(70, 10, 50, 10)
+        text = element_text(size = bigtitle_size)
       )
     )
   

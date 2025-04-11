@@ -149,8 +149,7 @@ PredationSeries <- function(Data,
     patchwork::plot_annotation(
       title ="Predation series",
       theme = theme(
-        text = element_text(size = bigtitle_size),
-        plot.margin = margin(70, 10, 50, 10)
+        text = element_text(size = bigtitle_size)
       )
     )
   
