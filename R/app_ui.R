@@ -3,32 +3,29 @@
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
 #' @import shiny
+#' @import shinyWidgets
 #' @noRd
 app_ui <- function(request) {
   tagList(
-    # Leave this function for adding external resources
     golem_add_external_resources(),
-    # Your application UI logic
     fluidPage(
       tags$head(
         includeCSS(app_sys("www/styles.css")),
         tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap"),
       ),
       withTags({
-        div(
-          class = "header",
-          checked = NA,
-          h1(),
-          h2("RCaN Explorer")
-        )
+        div(class = "header",
+            checked = NA,
+            h1(),
+            h2("RCaN Explorer"))
       }),
       
       sidebarLayout(
-        
         # Sidebar Panel (Collapsible)
         sidebarPanel(
           id = "sidebar",
-          width = 3,  # Default width when visible
+          width = 3,
+          # Default width when visible
           wellPanel(
             checkboxInput("show_node_labels", "Show Node Labels", TRUE),
             checkboxInput("show_edge_labels", "Show Flux Labels", FALSE),
@@ -38,10 +35,19 @@ app_ui <- function(request) {
           ),
           br(),
           wellPanel(
-            selectInput("Typegraph", "Choose a visualization", 
-                        c("Select an option...")),
+            selectInput(
+              "Typegraph",
+              "Choose a visualization",
+              c("Select an option...")
+            ),
             checkboxInput("groupspecies", "Sum the Biomasses/Flux?", FALSE),
-            textInput("groupname", "Name your group", value = "", width = NULL, placeholder = NULL),
+            textInput(
+              "groupname",
+              "Name your group",
+              value = "",
+              width = NULL,
+              placeholder = NULL
+            ),
             width = 4
           ),
           
@@ -49,14 +55,23 @@ app_ui <- function(request) {
         
         # Main Content with Tabs
         mainPanel(
-          width = 9,  # Takes the rest of the space
+          width = 9,
+          # Takes the rest of the space
           tabsetPanel(
             id = "main_tabs",
-            tabPanel("Network", visNetwork::visNetworkOutput("Foodweb", height = "80vh")), 
-            tabPanel("Plots", 
-                     br(),
-                     plotOutput("Plots", height = "auto")%>% shinycssloaders::withSpinner(type = 6)
-            ) 
+            tabPanel(
+              "Network",
+              dropdownButton(inputId = "helpbutton",
+                             label="Help",
+                             icon=icon("fa-question"))%>%
+              visNetwork::visNetworkOutput("Foodweb", height = "80vh")%>% 
+              shinycssloaders::withSpinner(type = 6)
+            ),
+            tabPanel(
+              "Plots",
+              br(),
+              plotOutput("Plots", height = "auto") %>% shinycssloaders::withSpinner(type = 6)
+            )
           )
         )
       )
@@ -73,17 +88,8 @@ app_ui <- function(request) {
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
 golem_add_external_resources <- function() {
-  add_resource_path(
-    "www",
-    app_sys("app/www")
-  )
+  add_resource_path("www", app_sys("app/www"))
   favicon()
-  tags$head(
-    bundle_resources(
-      path = app_sys("app/www"),
-      app_title = "RCaNvisualtool"
-    )
-    # Add here other external resources
-    # for example, you can add shinyalert::useShinyalert()
+  tags$head(bundle_resources(path = app_sys("app/www"), app_title = "RCaNvisualtool")
   )
 }
