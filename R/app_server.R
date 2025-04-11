@@ -228,7 +228,6 @@ app_server <- function(input, output, session) {
     req(input$Typegraph, input$selected_components)
     
     ecosystem_components <- input$selected_components
-    Info_table<-data$Info
     
     #Plot Series of biomass
     if (input$Typegraph == "Biomass Series") {
@@ -329,42 +328,8 @@ app_server <- function(input, output, session) {
       width * ceiling(num_plots / 2)
   }))
   
-  output$table_info <- DT::renderDT({
-    DT::datatable(
-      data$Info,
-      editable = TRUE,
-      rownames = FALSE,
-      escape = FALSE,
-      options = list(
-        columnDefs = list(
-          list(targets = 2, render = htmlwidgets::JS(
-            "function(data, type, row, meta) {",
-            "  return '<input type=\"color\" value=\"' + data + '\" class=\"color-picker\">';",
-            "}")
-          )
-        )
-      )
-    )%>%
-      # Adding JavaScript to listen for color changes
-      htmlwidgets::onRender("
-      $(document).on('input', '.color-picker', function() {
-        var color = $(this).val();  // Get the new color value
-        var row = $(this).closest('tr').index();  // Get the row index
-        var col = 2;  // The column that contains the color (index 2 in your case)
-        Shiny.onInputChange('color_change', {row: row, color: color});
-      });
-    ")
-  })
-  
-  observeEvent(input$color_change, {
-    row <- input$color_change$row
-    color <- input$color_change$color
-    
-    # Update the color in your data$Info reactive table
-    data$Info[row, 3] <- color  # Assume the color is in the 3rd column (adjust index if needed)
-    
-    # Print the updated table to verify the changes
-    print(data$Info)
+  output$table_info <- renderDT({
+    rv$data
   })
   
 }
