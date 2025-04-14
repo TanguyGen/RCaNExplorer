@@ -14,7 +14,7 @@ RCaNExplorer::run_app()
 ```
 
 ## How to use the app?
-1. Use the already implemented versio of the model or import another one.
+1. Use the already implemented version of the model or import another one.
 2. Select on the food-web network the fluxes or species/Components to visualise.
 3. (Optionnal) Update, in the tab "Metadata" the names and the colour of the species in to be ploted.
 3. Choose the type of visualisation (plots) you want to obtain on the left panel.

@@ -10,7 +10,9 @@
 app_server <- function(input, output, session) {
   options(shiny.maxRequestSize = 1000 * 1024 ^ 2) #Increase download size limit
   
-  data <- reactiveValues(CaNSample = NULL, CaNSample_long = NULL, Info=NULL) #Create a reactive value that will contain the data
+  data <- reactiveValues(CaNSample = NULL,
+                         CaNSample_long = NULL,
+                         Info = NULL) #Create a reactive value that will contain the data
   
   observe({
     if (!is.null(input$rcanfile) &&
@@ -69,12 +71,23 @@ app_server <- function(input, output, session) {
   observe({
     if (!is.null(input$metadatafile) &&
         length(input$metadatafile$datapath) == 1) {
-      Info_table<-read.csv(input$metadatafile$datapath)
+      
+      table <- read.csv(input$metadatafile$datapath)
+      
+      if (!identical(colnames(table), c("ID", "FullName", "Color", "Biomass"))) {
+        stop("The columns of the metadata must be ID,FullName,Color,Biomass")
+      } else if (!setequal(table$ID,
+                           data$CaNSample$CaNmod$components_param$Component)) {
+        #if the IDs from the table and from the CaNSample are not matching -> error
+        stop(
+          "The species from the metadata must be the same as the ones from the CaNSample RData"
+        )
+      } else Info_table <- table
     } else if (is.null(data$Info)) {
-      Info_table <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer'))
-     
-    } else {
-      return()
+        Info_table <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer'))
+    }
+      else {
+        return()
     }
     data$Info <- Info_table
   })
@@ -93,7 +106,7 @@ app_server <- function(input, output, session) {
   
   #Render the interactive foodweb
   output$Foodweb <- visNetwork::renderVisNetwork({
-    Info_table<-data$Info
+    Info_table <- data$Info
     req(data$CaNSample)  #Make sure we have data
     
     list_element <- data$CaNSample$CaNmod$components_param$Component #Get the ecosystem components
@@ -223,7 +236,7 @@ app_server <- function(input, output, session) {
   })
   
   observeEvent(input$continue, {
-    req(input$Typegraph,input$selected_components)
+    req(input$Typegraph, input$selected_components)
     updateTabsetPanel(session, "menu", selected = "Plots")
   })
   
@@ -243,7 +256,7 @@ app_server <- function(input, output, session) {
   plot_obj <- reactive({
     req(input$Typegraph, input$selected_components)
     
-    Info_table<-data$Info
+    Info_table <- data$Info
     
     ecosystem_components <- input$selected_components
     
@@ -339,11 +352,12 @@ app_server <- function(input, output, session) {
     if (is.null(width))
       return(400)
     if (num_plots == 0)
-      return(400)else if(num_plots==1){
-        return(800)
-      }else{
-        width * ceiling(num_plots/3)
-      }
+      return(400)
+    else if (num_plots == 1) {
+      return(800)
+    } else{
+      width * ceiling(num_plots / 3)
+    }
     
   }))
   
@@ -352,34 +366,37 @@ app_server <- function(input, output, session) {
       data$Info,
       editable = TRUE,
       rownames = FALSE,
-      selection ="none",
+      selection = "none",
       escape = FALSE,
-      options = list(
-        columnDefs = list(
-          list(targets = 2, render = htmlwidgets::JS(
+      options = list(columnDefs = list(
+        list(
+          targets = 2,
+          render = htmlwidgets::JS(
             "function(data, type, row, meta) {",
             "  return '<input type=\"color\" value=\"' + data + '\" class=\"color-picker\">';",
-            "}")
-          ),
-            list(visible = FALSE, targets = c(0,3))  # Hide columns Biomass
-        )
-      )
+            "}"
+          )
+        ),
+        list(visible = FALSE, targets = c(0, 3))  # Hide columns Biomass
+      ))
     ) %>%
-      htmlwidgets::onRender("
+      htmlwidgets::onRender(
+        "
         $(document).on('change', '.color-picker', function() {
           var color = $(this).val();  // Get the new color value
           var row = $(this).closest('tr').index();  // Get the row index
           var col = 2;  // The column that contains the color (index 2 in your case)
-          
+
           // Update the value in the server-side input (Shiny input)
           Shiny.onInputChange('color_change', {row: row, color: color});
         });
-      ")
+      "
+      )
   })
   
   # Handle the color change on the server side
   observeEvent(input$color_change, {
-    row <- input$color_change$row+1
+    row <- input$color_change$row + 1
     color <- input$color_change$color
     
     # Update the color in data$Info
@@ -388,7 +405,7 @@ app_server <- function(input, output, session) {
   
   observeEvent(input$table_info_cell_edit, {
     row  <- input$table_info_cell_edit$row
-    clmn <- input$table_info_cell_edit$col+1
+    clmn <- input$table_info_cell_edit$col + 1
     data$Info[row, clmn] <- input$table_info_cell_edit$value
   })
   
@@ -397,8 +414,7 @@ app_server <- function(input, output, session) {
     #Name of the saved RData file
     content = function(file) {
       Info <- data$Info
-      write.csv(Info,file, row.names = FALSE)
+      write.csv(Info, file, row.names = FALSE)
     }
   )
 }
-
