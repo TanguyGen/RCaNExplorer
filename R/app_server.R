@@ -12,9 +12,6 @@ app_server <- function(input, output, session) {
   
   data <- reactiveValues(CaNSample = NULL, CaNSample_long = NULL, Info=NULL) #Create a reactive value that will contain the data
   
-  Info_table <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer')) #Import the metadata associated to each species (Color, FullName, Representation of the biomass?)
-  
-  data$Info <-Info_table
   observe({
     if (!is.null(input$rcanfile) &&
         length(input$rcanfile$datapath) > 0) {
@@ -67,6 +64,19 @@ app_server <- function(input, output, session) {
     
     data$CaNSample <- obj #Put the loaded object into the reactive value
     data$CaNSample_long <- transform_CaNSample(data$CaNSample) #Create CaNSample_long, a 3 columns version of CaNSample to simplify further handling
+  })
+  
+  observe({
+    if (!is.null(input$metadatafile) &&
+        length(input$metadatafile$datapath) == 1) {
+      Info_table<-read.csv(input$metadatafile$datapath)
+    } else if (is.null(data$Info)) {
+      Info_table <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer'))
+     
+    } else {
+      return()
+    }
+    data$Info <- Info_table
   })
   
   transform_CaNSample <- function(CaNSample) {
@@ -373,9 +383,6 @@ app_server <- function(input, output, session) {
     
     # Update the color in data$Info
     data$Info[row, 3] <- color
-    
-    # Print the updated table for debugging
-    print(data$Info)
   })
   
   observeEvent(input$table_info_cell_edit, {
@@ -385,11 +392,11 @@ app_server <- function(input, output, session) {
   })
   
   output$saveinfo <- downloadHandler(
-    filename = "Info_table.csv",
+    filename =  paste0("Info_table", format(Sys.time(), "%d-%m-%Y"), ".csv"),
     #Name of the saved RData file
     content = function(file) {
       Info <- data$Info
-      write.csv(Info,file)
+      write.csv(Info,file, row.names = FALSE)
     }
   )
 }

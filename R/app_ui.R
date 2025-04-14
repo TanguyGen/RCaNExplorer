@@ -93,8 +93,12 @@ app_ui <- function(request) {
             ),
             tabPanel(
               "Metadata",
+              br(),
+              fileInput("metadatafile", "Input a metadata file", accept = ".csv"),
+              br(),
               DT::DTOutput("table_info"),
-              downloadButton("saveinfo", "Download new graphical metadata"),
+              br(),
+              downloadButton("saveinfo", "Download new graphical metadata")
             )
           )
         )
