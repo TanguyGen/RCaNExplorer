@@ -93,7 +93,8 @@ app_ui <- function(request) {
             ),
             tabPanel(
               "Metadata",
-              DT::DTOutput("table_info")
+              DT::DTOutput("table_info"),
+              downloadButton("saveinfo", "Download new graphical metadata"),
             )
           )
         )

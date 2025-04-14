@@ -45,10 +45,10 @@ div.row {
   box-shadow: none;
 }
 
-.help-btn-wrapper .dropdown-menu {
-  padding: 15px;
+.help-btn-wrapper {
+  padding: 0px;
   max-width: 300px;
   font-size: 14px;
-  text-align: right;
+  text-align: left;
   white-space: normal;
 }

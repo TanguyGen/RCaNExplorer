@@ -336,6 +336,7 @@ app_server <- function(input, output, session) {
       data$Info,
       editable = TRUE,
       rownames = FALSE,
+      selection ="none",
       escape = FALSE,
       options = list(
         columnDefs = list(
@@ -343,12 +344,13 @@ app_server <- function(input, output, session) {
             "function(data, type, row, meta) {",
             "  return '<input type=\"color\" value=\"' + data + '\" class=\"color-picker\">';",
             "}")
-          )
+          ),
+            list(visible = FALSE, targets = 3)  # Hide columns Biomass
         )
       )
     ) %>%
       htmlwidgets::onRender("
-        $(document).on('input', '.color-picker', function() {
+        $(document).on('change', '.color-picker', function() {
           var color = $(this).val();  // Get the new color value
           var row = $(this).closest('tr').index();  // Get the row index
           var col = 2;  // The column that contains the color (index 2 in your case)
@@ -361,7 +363,7 @@ app_server <- function(input, output, session) {
   
   # Handle the color change on the server side
   observeEvent(input$color_change, {
-    row <- input$color_change$row
+    row <- input$color_change$row+1
     color <- input$color_change$color
     
     # Update the color in data$Info
@@ -370,5 +372,20 @@ app_server <- function(input, output, session) {
     # Print the updated table for debugging
     print(data$Info)
   })
+  
+  observeEvent(input$table_info_cell_edit, {
+    row  <- input$table_info_cell_edit$row
+    clmn <- input$table_info_cell_edit$col+1
+    data$Info[row, clmn] <- input$table_info_cell_edit$value
+  })
+  
+  output$saveinfo <- downloadHandler(
+    filename = "Info_table.csv",
+    #Name of the saved RData file
+    content = function(file) {
+      Info <- data$Info
+      write.csv(Info,file)
+    }
+  )
 }
 
