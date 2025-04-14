@@ -93,6 +93,7 @@ app_server <- function(input, output, session) {
   
   #Render the interactive foodweb
   output$Foodweb <- visNetwork::renderVisNetwork({
+    Info_table<-data$Info
     req(data$CaNSample)  #Make sure we have data
     
     list_element <- data$CaNSample$CaNmod$components_param$Component #Get the ecosystem components
