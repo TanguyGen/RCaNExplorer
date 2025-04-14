@@ -345,7 +345,7 @@ app_server <- function(input, output, session) {
             "  return '<input type=\"color\" value=\"' + data + '\" class=\"color-picker\">';",
             "}")
           ),
-            list(visible = FALSE, targets = 3)  # Hide columns Biomass
+            list(visible = FALSE, targets = c(0,3))  # Hide columns Biomass
         )
       )
     ) %>%
