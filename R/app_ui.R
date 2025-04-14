@@ -48,9 +48,9 @@ app_ui <- function(request) {
               width = NULL,
               placeholder = NULL
             ),
+            actionButton("continue", "Continue", class = "btn-continue"),
             width = 4
-          ),
-          
+          )
         ),
         
         # Main Content with Tabs
@@ -58,7 +58,7 @@ app_ui <- function(request) {
           width = 9,
           # Takes the rest of the space
           tabsetPanel(
-            id = "main_tabs",
+            id = "menu",
             tabPanel(
               "Network",
               div(class = "help-btn-wrapper",

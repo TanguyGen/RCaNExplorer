@@ -52,3 +52,8 @@ div.row {
   text-align: left;
   white-space: normal;
 }
+
+.btn-continue {
+  background-color: #006494 !important;
+  color: white;
+}

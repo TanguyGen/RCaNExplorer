@@ -211,6 +211,11 @@ app_server <- function(input, output, session) {
     }
   })
   
+  observeEvent(input$continue, {
+    req(input$Typegraph,input$selected_components)
+    updateTabsetPanel(session, "menu", selected = "Plots")
+  })
+  
   #Download the current CaNSample file with new positions
   output$savedata <- downloadHandler(
     filename = "CaNSample.RData",
