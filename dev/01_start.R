@@ -22,13 +22,18 @@ golem::fill_desc(
   pkg_name = "RCaNExplorer", # The name of the golem package containing the app (typically lowercase, no underscore or periods)
   pkg_title = "RCaNExplorer", # What the Package Does (One Line, Title Case, No Period)
   pkg_description = "Interactive tool for visualisation of rcan results", # What the package does (one paragraph).
-  authors = person(
+  authors = c(person(
     given = "Tanguy", # Your First Name
     family = "Genthon", # Your Last Name
     email = "tanguy.genthon@hi.no", # Your email
     role = c("aut", "cre") # Your role (here author/creator)
+  ),person(
+    given = "Benjamin", # Your First Name
+    family = "Planque", # Your Last Name
+    role = c("aut")
+  )
   ),
-  repo_url = "https://github.com/TanguyGen/RCaNvisualtool/", # The URL of the GitHub repo (optional),
+  repo_url = "https://github.com/TanguyGen/RCaNExplorer", # The URL of the GitHub repo (optional),
   pkg_version = "0.0.0.9000", # The version of the package containing the app
   set_options = TRUE # Set the global golem options
 )
