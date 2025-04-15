@@ -61,27 +61,27 @@ app_ui <- function(request) {
             id = "menu",
             tabPanel(
               "Network",
-              div(class = "help-btn-wrapper",
-    dropdownButton(
-      inputId = "helpbutton",
-      label = NULL,
-      icon = icon("circle-question"),
-      circle = TRUE,
-      tooltip = tooltipOptions(title = "Help"),
-      status = "default",  # optional styling
-      
-      # 👇 Content inside dropdown
-      tags$div(
-        class = "help-btn-wrapper",
-        style = "padding: 10px; max-width: 300px; allign: right;",
-        tags$h4("How to Use"),
-        tags$p("• Upload your CaN RData file using the left panel or use the already implemented one."),
-        tags$p("• Choose one or more species/fluxes from the network. Hold Ctrl/cmd to select multiple elements at once."),
-        tags$p("• Choose a visualization type."),
-        tags$p("• Move to the plot tab to visualise the outputs.")
-      )
-    )
-),
+              div(
+                style = "display: flex; justify-content: flex-end; margin-bottom: 10px;",
+                dropdownButton(
+                  inputId = "helpbutton",
+                  label = NULL,
+                  icon = icon("circle-question"),
+                  circle = TRUE,
+                  right=FALSE,
+                  tooltip = tooltipOptions(title = "Help"),
+                  status = "default",
+                  
+                  tags$div(
+                    style = "padding: 10px; max-width: 300px;",
+                    tags$h4("How to Use"),
+                    tags$p("• Upload your CaN RData file using the left panel or use the already implemented one."),
+                    tags$p("• Choose one or more species/fluxes from the network. Hold Ctrl/cmd to select multiple elements at once."),
+                    tags$p("• Choose a visualization type."),
+                    tags$p("• Move to the plot tab to visualise the outputs.")
+                  )
+                )
+              ),
               visNetwork::visNetworkOutput("Foodweb", height = "80vh")%>% 
               shinycssloaders::withSpinner(type = 6)
             ),
@@ -105,6 +105,7 @@ app_ui <- function(request) {
     )
   )
 }
+
 
 #' Add external Resources to the Application
 #'
