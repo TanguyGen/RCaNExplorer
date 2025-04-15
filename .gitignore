@@ -9,3 +9,4 @@ rsconnect/
 .Rbuildignore
 inst/app/www/.DS_Store
 tests/
+app.R

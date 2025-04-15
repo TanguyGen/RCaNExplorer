@@ -63,7 +63,6 @@ app_ui <- function(request) {
               "Network",
               div(class = "help-btn-wrapper",
     dropdownButton(
-      class="dropdown-menu",
       inputId = "helpbutton",
       label = NULL,
       icon = icon("circle-question"),
@@ -77,7 +76,7 @@ app_ui <- function(request) {
         style = "padding: 10px; max-width: 300px; allign: right;",
         tags$h4("How to Use"),
         tags$p("• Upload your CaN RData file using the left panel or use the already implemented one."),
-        tags$p("• Choose one or more species/fluxes from the network. Hold Ctrl/cmd to select multiple at once."),
+        tags$p("• Choose one or more species/fluxes from the network. Hold Ctrl/cmd to select multiple elements at once."),
         tags$p("• Choose a visualization type."),
         tags$p("• Move to the plot tab to visualise the outputs.")
       )
