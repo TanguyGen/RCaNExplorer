@@ -368,7 +368,9 @@ app_server <- function(input, output, session) {
       rownames = FALSE,
       selection = "none",
       escape = FALSE,
-      options = list(columnDefs = list(
+      options = list(
+        pageLength=15,
+        columnDefs = list(
         list(
           targets = 2,
           render = htmlwidgets::JS(
