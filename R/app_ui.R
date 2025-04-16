@@ -73,7 +73,6 @@ app_ui <- function(request) {
                   status = "default",
                   
                   tags$div(
-                    style = "padding: 10px; max-width: 300px;",
                     tags$h4("How to Use"),
                     tags$p("• Upload your CaN RData file using the left panel or use the already implemented one."),
                     tags$p("• Choose one or more species/fluxes from the network. Hold Ctrl/cmd to select multiple elements at once."),
