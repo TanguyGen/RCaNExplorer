@@ -19,6 +19,7 @@ Imports:
     purrr,
     shiny,
     shinycssloaders,
+    shinyWidgets,
     stringr,
     tibble,
     tidyr,
