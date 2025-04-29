@@ -59,7 +59,7 @@ FluxSerie <- function(Data,
                        PredatorName = FullName,
                        Color = "#27548A")]
   
-  Filtered_data[, `:=`(FullName = paste0("From ", PreyName, " to ", PredatorName))]
+  Filtered_data[, `:=`(FullName = stringr::str_wrap(paste0("From ", PreyName, " to ", PredatorName), width = 30))]
   
   if (group == TRUE) {
     Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year, Sample_id)]
