@@ -71,7 +71,7 @@ RatioProductionBiomass <- function(Data,
   
   
   #Merge the series if the user choose to group the species into a super species
-  if (group) {
+  if (group == TRUE & length(param)>1) {
     merged_data <- merged_data %>%
       group_by(Year, Sample_id) %>%
       summarise(#Sum all the biomasses and productions for each year and iterations

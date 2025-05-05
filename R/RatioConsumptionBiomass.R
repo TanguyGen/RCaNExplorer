@@ -71,7 +71,7 @@ RatioConsumptionBiomass <- function(Data,
     filter(Year != max(Year)) #Remove the last year because it only contain the biomass
   
   #Merge the series if the user choose to group the species into a super species
-  if (group) {
+  if (group == TRUE & length(param)>1) {
     merged_data <- merged_data %>%
       group_by(Year, Sample_id) %>%
       summarise(#Sum all the biomasses and consumptions for each year and iterations

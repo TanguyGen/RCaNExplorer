@@ -60,7 +60,7 @@ PredationSeries <- function(Data,
     stop("param not recognized")
   
   # If grouping is enabled, summarize the data by targeted species
-  if (group == TRUE) {
+  if (group == TRUE & length(param)>1) {
     # Summarize by Year and Sample_id
     Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year,target, Sample_id)]
     

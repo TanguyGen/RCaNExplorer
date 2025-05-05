@@ -50,7 +50,7 @@ BiomassSeries <- function(Data,
     stop("param not recognized")
   
   # If grouping is enabled, summarize the data by year and sample ID
-  if (group == TRUE) {
+  if (group == TRUE & length(param)>1) {
     Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year, Sample_id)]#Sum the biomasses
     
     Filtered_data[, series := grouplabel] # Set the grouped label for the series
