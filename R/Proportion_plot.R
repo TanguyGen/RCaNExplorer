@@ -24,7 +24,7 @@ Proportion_plot <- function(Data, info, session) {
   Data <- Data %>%
     select(Year, target, value) %>%
     group_by(Year) %>%
-    mutate(proportion = value / sum(value, na.rm = TRUE)) %>% #Get the proportion of yearly biomass of the targeted species eaten by predators or the biomass consumed by the targeted species
+    mutate(proportion = value / sum(value, na.rm = TRUE)) %>%
     ungroup() %>%
     left_join(info, by = "target") %>%
     mutate(Year = as.numeric(Year))
