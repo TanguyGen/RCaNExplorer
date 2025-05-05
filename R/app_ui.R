@@ -75,8 +75,9 @@ app_ui <- function(request) {
                   tags$div(
                     tags$h4("How to Use"),
                     tags$p("• Upload your CaN RData file using the left panel or use the already implemented one."),
-                    tags$p("• Choose one or more species/fluxes from the network. Hold Ctrl/cmd to select multiple elements at once."),
-                    tags$p("• Choose a visualization type."),
+                    tags$p("• Click on one or more species/fluxes from the network to select which ones to visualise (hold Ctrl/cmd to select multiple elements at once)."),
+                    tags$p("• Use the Metadata tab to change the colors or names of the species appearing in the plots."),
+                    tags$p("• Choose a type of visualization in the left pannel «Choose a visualisation»."),
                     tags$p("• Move to the plot tab to visualise the outputs.")
                   )
                 )
