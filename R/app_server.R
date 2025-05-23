@@ -22,7 +22,7 @@ app_server <- function(input, output, session) {
       #Empty the reactive value
       data$CaNSample <- NULL
       data$CaNSample_long <- NULL
-      
+      data$Info <- NULL
       e <- new.env()  #Create a new environment
       load(input$rcanfile$datapath, envir = e)       #Load the file in the new environment
       loaded_objs <- ls(envir = e) # Get all the variables from the environment
@@ -74,8 +74,8 @@ app_server <- function(input, output, session) {
       
       table <- read.csv(input$metadatafile$datapath)
       
-      if (!identical(colnames(table), c("ID", "FullName", "Color", "Biomass"))) {
-        stop("The columns of the metadata must be ID,FullName,Color,Biomass")
+      if (!identical(colnames(table), c("ID", "FullName", "Color"))) {
+        stop("The columns of the metadata must be ID,FullName,Color")
       } else if (!setequal(table$ID,
                            data$CaNSample$CaNmod$components_param$Component)) {
         #if the IDs from the table and from the CaNSample are not matching -> error
@@ -84,7 +84,35 @@ app_server <- function(input, output, session) {
         )
       } else Info_table <- table
     } else if (is.null(data$Info)) {
-        Info_table <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer'))
+        table <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer'))
+        if (!setequal(table$ID,
+                      data$CaNSample$CaNmod$components_param$Component)){
+          table<-table%>%
+            filter(ID %in% data$CaNSample$CaNmod$components_param$Component)
+          
+          missing_ids <- setdiff(data$CaNSample$CaNmod$components_param$Component, table$ID)
+          print(missing_ids)
+          
+          #Colors from paletteer::paletteer_d("ggsci::default_igv")
+          colors_vector <- c(
+            "#5050ff", "#ce3d32", "#749b58", "#f0e685", "#466983", "#ba6338", "#5db1dd",
+            "#802268", "#6bd76b", "#d595a7", "#924822", "#837b8d", "#c75127", "#d58f5c",
+            "#7a65a5", "#e4af69", "#3b1b53", "#cddeb7", "#612a79", "#ae1f63", "#e7c76f",
+            "#5a655e", "#cc9900", "#99cc00", "#a9a9a9", "#cc9900", "#99cc00", "#33cc00",
+            "#00cc33", "#00cc99", "#0099cc", "#0a47ff", "#4775ff", "#ffc20a", "#ffd147",
+            "#990033", "#991a00", "#996600", "#809900", "#339900", "#00991a", "#009966",
+            "#008099", "#003399", "#1a0099", "#660099", "#990080", "#d60047", "#ff1463",
+            "#00d68f", "#14ffb1"
+          )
+          palette <- rep(colors_vector, length.out = length(missing_ids))
+          
+          missing_table <- data.frame(ID = missing_ids, FullName=missing_ids,Color = palette, stringsAsFactors = FALSE)
+          
+          Info_table <- table %>%
+            rbind(missing_table)
+        }else{
+          Info_table<-table
+        }
     }
       else {
         return()
@@ -110,7 +138,6 @@ app_server <- function(input, output, session) {
     req(data$CaNSample)  #Make sure we have data
     
     list_element <- data$CaNSample$CaNmod$components_param$Component #Get the ecosystem components
-    
     img_dir <- system.file("app/www/img", package = "RCaNExplorer")
     existing_images <- list.files(img_dir)
     
@@ -127,13 +154,13 @@ app_server <- function(input, output, session) {
           paste0(id, ".png") %in% existing_images ~ "image",
           TRUE ~ "dot"
         ),
+        color = Color,
         image = sprintf("www/img/%s.png", id),
         #Images are in inst/app/www in the format <ID>.png
         x = data$CaNSample$CaNmod$components_param$X * 1000,
         #Get the x and y in a bigger scale to have more space between nodes
         y = data$CaNSample$CaNmod$components_param$Y * 1000,
-        font.bold = case_when(#Put a bigger font for species inside the model domain, resolved in terms of biomass ad fluxes
-          Biomass ~ 22, !Biomass ~ 14)
+        font.bold =22
       )
     #Create the links between the nodes
     edges <- tibble::tibble(
@@ -147,7 +174,8 @@ app_server <- function(input, output, session) {
         label = case_when(input$show_edge_labels ~ id, #Show the id as label only when the user chose to show the labels
                           TRUE ~ ""),
         from = data$CaNSample$CaNmod$fluxes_def$From,
-        to = data$CaNSample$CaNmod$fluxes_def$To
+        to = data$CaNSample$CaNmod$fluxes_def$To,
+        color = "grey"
       )
     
     #Create the network from the nodes and edges
@@ -262,16 +290,6 @@ app_server <- function(input, output, session) {
     
     #Plot Series of biomass
     if (input$Typegraph == "Biomass Series") {
-      Biomasscheck <- filter(Info_table, ID %in% input$selected_components) #Get the metadata to check if the biomass of the nodes is resolved
-      
-      if (!all(Biomasscheck$Biomass)) {
-        #If some nodes biomass are not resolved, make a notification showing which ones were not represented
-        showNotification(paste0(
-          "The biomass of ",
-          paste(Biomasscheck$FullName[Biomasscheck$Biomass == FALSE], collapse = ", "),
-          " is/are not resolved so will not be presented."
-        ))
-      }
       #Call the function to create Biomass plots
       BiomassSeries(
         data$CaNSample_long,
@@ -362,8 +380,9 @@ app_server <- function(input, output, session) {
   }))
   
   output$table_info <- DT::renderDT({
+   dt<-data$Info
     DT::datatable(
-      data$Info,
+      dt,
       editable = TRUE,
       rownames = FALSE,
       selection = "none",
@@ -378,8 +397,7 @@ app_server <- function(input, output, session) {
             "  return '<input type=\"color\" value=\"' + data + '\" class=\"color-picker\">';",
             "}"
           )
-        ),
-        list(visible = FALSE, targets = c(0, 3))  # Hide columns Biomass
+        )
       ))
     ) %>%
       htmlwidgets::onRender(

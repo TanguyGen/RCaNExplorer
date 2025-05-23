@@ -1,27 +1,27 @@
-﻿ID,FullName,Color,Biomass
-BlueWhitingNS,Blue whiting,#00c5e7,TRUE
-MackerelNS,Mackerel,#186d7b,TRUE
-HerringNS,Herring (adults),#0590a8,TRUE
-HerringBS,Herring (juveniles),#8Fb79D,TRUE
-CapelinBS,Capelin,#d9d1b0,TRUE
-PolarCodBS,Polar cod,#cca608,TRUE
-CodBS,Cod,#f6c703,TRUE
-OtherDemersalBS,Other demersals,#f67403,TRUE
-ToothedWhales,Toothed whales,#8f979d,TRUE
-MinkeWhale,Minke whales,#5A646C,TRUE
-OtherBaleenWhales,Other baleen whales,#475057,TRUE
-Seals,Seals,#8e8888,TRUE
-ZooPlanktonNS,Zooplankton (Norwegian Sea),#b969ea,FALSE
-MesopelagicAndOtherNS,Mesopelagic fauna,#9858df,FALSE
-KrillNS,Krill (Norwegian Sea),#C24C95,FALSE
-KrillBS,Krill (Barents Sea),#943C72,FALSE
-CopepodBS,Copepods (Barents Sea),#ec80c2,FALSE
-AmphipodsBS,Amphipods (Barents Sea),#b98da8,FALSE
-BenthosBS,Benthos and other plankton (Barents Sea),#99728A,FALSE
-Birds,Seabirds,#ea1765,FALSE
-OutsideResources,Outside resources,#673999,FALSE
-OutsidePredation,Outside predators,#222D75,FALSE
-FMinkeWhale,Hunting of Minke whales,#A21E30,FALSE
-FSeals,Hunting of Seals,#A21E30,FALSE
-FDemersal,Demersal fisheries,#A21E30,FALSE
-FPelagic,Pelagic Fisheries,#A21E30,FALSE
+﻿ID,FullName,Color
+BlueWhitingNS,Blue whiting,#00c5e7
+MackerelNS,Mackerel,#186d7b
+HerringNS,Herring (adults),#0590a8
+HerringBS,Herring (juveniles),#8Fb79D
+CapelinBS,Capelin,#d9d1b0
+PolarCodBS,Polar cod,#cca608
+CodBS,Cod,#f6c703
+OtherDemersalBS,Other demersals,#f67403
+ToothedWhales,Toothed whales,#8f979d
+MinkeWhale,Minke whales,#5A646C
+OtherBaleenWhales,Other baleen whales,#475057
+Seals,Seals,#8e8888
+ZooPlanktonNS,Zooplankton (Norwegian Sea),#b969ea
+MesopelagicAndOtherNS,Mesopelagic fauna,#9858df
+KrillNS,Krill (Norwegian Sea),#C24C95
+KrillBS,Krill (Barents Sea),#943C72
+CopepodBS,Copepods (Barents Sea),#ec80c2
+AmphipodsBS,Amphipods (Barents Sea),#b98da8
+BenthosBS,Benthos and other plankton (Barents Sea),#99728A
+Birds,Seabirds,#ea1765
+OutsideResources,Outside resources,#673999
+OutsidePredation,Outside predators,#222D75
+FMinkeWhale,Hunting of Minke whales,#A21E30
+FSeals,Hunting of Seals,#A21E30
+FDemersal,Demersal fisheries,#A21E30
+FPelagic,Pelagic Fisheries,#A21E30
