@@ -68,7 +68,7 @@ PredationSeries <- function(Data,
     Filtered_data[, series := grouplabel]
     
     # Add the grouped label information to the 'info' data frame
-    info <- rbind(info, c(grouplabel, grouplabel, "#27548A", FALSE))
+    info <- rbind(info, c(grouplabel, grouplabel, "#27548A"))
   }
   
   # Create a list of plots for each unique series

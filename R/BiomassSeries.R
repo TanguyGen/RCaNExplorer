@@ -61,8 +61,7 @@ BiomassSeries <- function(Data,
       tibble::tibble(
         series = grouplabel,
         FullName = grouplabel,
-        Color = "#27548A",
-        Biomass = FALSE
+        Color = "#27548A"
       )
     )
   }
