@@ -91,7 +91,6 @@ app_server <- function(input, output, session) {
             filter(ID %in% data$CaNSample$CaNmod$components_param$Component)
           
           missing_ids <- setdiff(data$CaNSample$CaNmod$components_param$Component, table$ID)
-          print(missing_ids)
           
           #Colors from paletteer::paletteer_d("ggsci::default_igv")
           colors_vector <- c(
@@ -116,7 +115,26 @@ app_server <- function(input, output, session) {
     }
       else {
         return()
-    }
+      }
+    
+    Info_table$Image <- vapply(Info_table$ID, function(id) {
+      img_path <- sprintf("www/img/%s.png", id)
+      if (file.exists(file.path("inst/app", img_path))) {
+        img_tag <- sprintf('<img src="%s" width="60px" />', img_path)
+      } else {
+        img_tag <- '<span style="color:gray;">No image</span>'
+      }
+      
+      img_tag
+    }, character(1))
+    
+    Info_table$Upload <- vapply(Info_table$ID, function(id) {
+      sprintf(
+        '<label class="custom-upload">Upload<input type="file" class="image-upload" data-id="%s" accept=".png,.jpg,.jpeg,.svg" style="display:none;" /></label>',
+        id
+      )
+    }, character(1))
+    
     data$Info <- Info_table
   })
   
@@ -134,28 +152,31 @@ app_server <- function(input, output, session) {
   
   #Render the interactive foodweb
   output$Foodweb <- visNetwork::renderVisNetwork({
+    req(data$Info)
     Info_table <- data$Info
     req(data$CaNSample)  #Make sure we have data
     
     list_element <- data$CaNSample$CaNmod$components_param$Component #Get the ecosystem components
     img_dir <- system.file("app/www/img", package = "RCaNExplorer")
     existing_images <- list.files(img_dir)
-    
     #Create the nodes of the foodweb network
-    nodes <- tibble::tibble(ID = list_element) %>%
-      left_join(Info_table) %>%
+    nodes <- Info_table%>% 
       mutate(
         id = ID,
         #Give them an ID
         label = case_when(#Show their ID as label only when the user chose to show the labels
           input$show_node_labels ~ id, TRUE ~ ""),
         shape = case_when(
-          #If there is an image existig for the id, put an image else, a sphere
+          grepl("^<img src=", Info_table$Image) ~ "image",
           paste0(id, ".png") %in% existing_images ~ "image",
           TRUE ~ "dot"
         ),
         color = Color,
-        image = sprintf("www/img/%s.png", id),
+        image = ifelse(
+          grepl("^<img src=", Info_table$Image),
+          sub("^<img src=\"([^\"]+)\".*$", "\\1", Info_table$Image),
+          sprintf("img/%s.png", id)
+        ),
         #Images are in inst/app/www in the format <ID>.png
         x = data$CaNSample$CaNmod$components_param$X * 1000,
         #Get the x and y in a bigger scale to have more space between nodes
@@ -402,15 +423,36 @@ app_server <- function(input, output, session) {
     ) %>%
       htmlwidgets::onRender(
         "
+        // Handle color picker changes
         $(document).on('change', '.color-picker', function() {
           var color = $(this).val();  // Get the new color value
           var row = $(this).closest('tr').index();  // Get the row index
-          var col = 2;  // The column that contains the color (index 2 in your case)
-
-          // Update the value in the server-side input (Shiny input)
-          Shiny.onInputChange('color_change', {row: row, color: color});
+          var col = 2;  // Column index of the color picker
+      
+          Shiny.setInputValue('color_change', {row: row, color: color}, {priority: 'event'});
         });
-      "
+      
+        // Handle image uploads
+        $(document).on('change', '.image-upload', function(e) {
+          var file = this.files[0];
+          var id = $(this).data('id');
+          var row = $(this).closest('tr').index(); 
+      
+          if (file && ['image/png', 'image/jpeg', 'image/svg+xml'].includes(file.type)) {
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+             Shiny.setInputValue('image_upload', {
+              id: id,
+              name: file.name,
+              type: file.type,
+              content: evt.target.result,
+              row:row
+        }, {priority: 'event'});
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+        "
       )
   })
   
@@ -423,6 +465,13 @@ app_server <- function(input, output, session) {
     data$Info[row, 3] <- color
   })
   
+  observeEvent(input$image_upload, {
+    upload <- input$image_upload
+    req(upload$content)
+    row <- upload$row + 1  # Adjust for 1-based indexing
+    data$Info[row, "Image"] <- sprintf('<img src="%s" width="40px" />', upload$content)
+  })
+  
   observeEvent(input$table_info_cell_edit, {
     row  <- input$table_info_cell_edit$row
     clmn <- input$table_info_cell_edit$col + 1
@@ -433,7 +482,8 @@ app_server <- function(input, output, session) {
     filename =  paste0("Info_table", format(Sys.time(), "%d-%m-%Y"), ".csv"),
     #Name of the saved RData file
     content = function(file) {
-      Info <- data$Info
+      Info <- data$Info%>% 
+        select(-Image, -Upload)
       write.csv(Info, file, row.names = FALSE)
     }
   )

@@ -72,3 +72,21 @@ div.row {
   background-color: #006494 !important;
   color: white;
 }
+
+.custom-upload {
+  background-color: #686D76;
+  color: white;
+  padding: 10px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.custom-upload:hover {
+  background-color: #373A40;
+}
+
+.custom-upload input[type="file"] {
+  display: none;
+}
