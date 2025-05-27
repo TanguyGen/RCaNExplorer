@@ -20,6 +20,7 @@ Proportion_plot <- function(Data, info, session) {
   
   info <- info %>% #Rename the metadata to assign a name to the preys or predators
     rename(target = series)
+
   
   Data <- Data %>%
     select(Year, target, value) %>%
@@ -29,12 +30,18 @@ Proportion_plot <- function(Data, info, session) {
     left_join(info, by = "target") %>%
     mutate(Year = as.numeric(Year))
   
+  color_vec <- setNames(Data$Color, Data$target)
+  color_vec <- color_vec[!duplicated(names(color_vec))]
+  label_vec <- setNames(Data$FullName, Data$target)
+  label_vec <- label_vec[!duplicated(names(label_vec))]
+  
+  
   g <- ggplot(Data, aes(x = Year, y = proportion, fill = target)) +
     geom_bar(stat = "identity",
              width = 1,
              colour = "black") +
     labs(y = "", x = "Year") +
-    scale_fill_manual(values = Data$Color, labels = Data$FullName) +
+    scale_fill_manual(values = color_vec, labels = label_vec) +
     theme_classic() +
     theme(
       axis.text.x = element_text(angle = 0, hjust = 0.5),

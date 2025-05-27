@@ -67,6 +67,20 @@ app_server <- function(input, output, session) {
     data$CaNSample <- obj #Put the loaded object into the reactive value
     data$CaNSample_long <- transform_CaNSample(data$CaNSample) #Create CaNSample_long, a 3 columns version of CaNSample to simplify further handling
   })
+  transform_CaNSample <- function(CaNSample) {
+    #Function to create CaNSample_long
+    tibble::as_tibble(as.matrix(CaNSample$mcmc)) %>%
+      mutate(Sample_id = 1:nrow(as.matrix(CaNSample$mcmc))) %>%
+      pivot_longer(
+        cols = -Sample_id,
+        names_to = c("Var", "Year"),
+        names_pattern = "(.*)\\[(.*)\\]",
+        values_to = 'value'
+      )%>%
+      left_join(CaNSample$CaNmod$fluxes_def, by = c("Var" = "Flux")) %>%
+      mutate(FluxTrophic = Trophic == 1)%>%
+      select(Sample_id,Var,Year,value,FluxTrophic)
+  }
   
   observe({
     if (!is.null(input$metadatafile) &&
@@ -138,17 +152,7 @@ app_server <- function(input, output, session) {
     data$Info <- Info_table
   })
   
-  transform_CaNSample <- function(CaNSample) {
-    #Function to create CaNSample_long
-    tibble::as_tibble(as.matrix(CaNSample$mcmc)) %>%
-      mutate(Sample_id = 1:nrow(as.matrix(CaNSample$mcmc))) %>%
-      pivot_longer(
-        cols = -Sample_id,
-        names_to = c("Var", "Year"),
-        names_pattern = "(.*)\\[(.*)\\]",
-        values_to = 'value'
-      )
-  }
+
   
   #Render the interactive foodweb
   output$Foodweb <- visNetwork::renderVisNetwork({
@@ -305,7 +309,8 @@ app_server <- function(input, output, session) {
   plot_obj <- reactive({
     req(input$Typegraph, input$selected_components)
     
-    Info_table <- data$Info
+    Info_table <- data$Info%>%
+      select(-Image,-Upload)
     
     ecosystem_components <- input$selected_components
     

@@ -134,6 +134,7 @@ ConsumptionSeries <- function(Data,
       
       # Combine the two plots using patchwork layout
       p <- p1 + p2
+      print(Data_byprey)
       return(p)
     })
   

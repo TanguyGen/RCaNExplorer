@@ -34,6 +34,7 @@ BiomassSeries <- function(Data,
   # Rename the ID to a value compatible with the data for further left_join
   info <- info %>%
     rename(series = ID)
+    
   
   Data <- data.table(Data)
   
@@ -51,6 +52,10 @@ BiomassSeries <- function(Data,
   
   # If grouping is enabled, summarize the data by year and sample ID
   if (group == TRUE & length(param)>1) {
+    
+    Prey_prop <- Filtered_data[, .(value = mean(value)), by = .(Year, series)]
+    setnames(Prey_prop, "series", "target")
+    
     Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year, Sample_id)]#Sum the biomasses
     
     Filtered_data[, series := grouplabel] # Set the grouped label for the series
@@ -83,12 +88,13 @@ BiomassSeries <- function(Data,
   quantiles <- quantiles %>%
     left_join(info, by = "series")
   
+  
   # Merge the filtered data with species information
   Filtered_data <- Filtered_data %>%
     left_join(info, by = "series")
   
   # Generate the plot using the 'Quantiles_plot' function
-  g <- Quantiles_plot(
+  g1 <- Quantiles_plot(
     quantiles,
     Filtered_data,
     selectedsamples,
@@ -96,6 +102,15 @@ BiomassSeries <- function(Data,
     ylab = ylab,
     session = session
   )
+  
+  
+  if (group==TRUE & length(param)>1){
+    g2<-Proportion_plot(Prey_prop, info = info, session = session)
+    g<- g1 + g2
+  }else{
+    g<-g1
+  }
+  
   
   # Return the generated plot
   return(g)
