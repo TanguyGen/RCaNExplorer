@@ -133,8 +133,10 @@ app_server <- function(input, output, session) {
     
     Info_table$Image <- vapply(Info_table$ID, function(id) {
       img_dir <- system.file("app/www/img", package = "RCaNExplorer")
-      img_path <- paste0(img_dir, id,".png")
-      if (file.exists(img_path)) {
+      existing_images <- list.files(img_dir)
+      img_path <- sprintf("www/img/%s.png", id)
+
+      if (paste0(id, ".png") %in% existing_images) {
         img_tag <- sprintf('<img src="%s" width="60px" />', img_path)
       } else {
         img_tag <- '<span style="color:gray;">No image</span>'
