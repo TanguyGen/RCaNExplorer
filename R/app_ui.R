@@ -117,7 +117,6 @@ app_ui <- function(request) {
 #' @noRd
 golem_add_external_resources <- function() {
   add_resource_path("www", app_sys("app/www"))
-  addResourcePath("img", system.file("app/www/img", package = "RCaNExplorer"))
   favicon()
   tags$head(bundle_resources(path = app_sys("app/www"), app_title = "RCaNvisualtool")
   )

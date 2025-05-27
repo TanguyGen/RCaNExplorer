@@ -132,7 +132,7 @@ app_server <- function(input, output, session) {
       }
     
     Info_table$Image <- vapply(Info_table$ID, function(id) {
-      img_path <- sprintf("img/%s.png", id)
+      img_path <- sprintf("www/img/%s.png", id)
       if (file.exists(file.path("inst/app", img_path))) {
         img_tag <- sprintf('<img src="%s" width="60px" />', img_path)
       } else {
@@ -179,7 +179,7 @@ app_server <- function(input, output, session) {
         image = ifelse(
           grepl("^<img src=", Info_table$Image),
           sub("^<img src=\"([^\"]+)\".*$", "\\1", Info_table$Image),
-          sprintf("img/%s.png", id)
+          sprintf("www/img/%s.png", id)
         ),
         #Images are in inst/app/www in the format <ID>.png
         x = data$CaNSample$CaNmod$components_param$X * 1000,
