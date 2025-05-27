@@ -132,8 +132,9 @@ app_server <- function(input, output, session) {
       }
     
     Info_table$Image <- vapply(Info_table$ID, function(id) {
-      img_path <- sprintf("www/img/%s.png", id)
-      if (file.exists(file.path("inst/app", img_path))) {
+      img_dir <- system.file("app/www/img", package = "RCaNExplorer")
+      img_path <- paste0(img_dir, id,".png")
+      if (file.exists(img_path)) {
         img_tag <- sprintf('<img src="%s" width="60px" />', img_path)
       } else {
         img_tag <- '<span style="color:gray;">No image</span>'
@@ -163,6 +164,7 @@ app_server <- function(input, output, session) {
     list_element <- data$CaNSample$CaNmod$components_param$Component #Get the ecosystem components
     img_dir <- system.file("app/www/img", package = "RCaNExplorer")
     existing_images <- list.files(img_dir)
+
     #Create the nodes of the foodweb network
     nodes <- Info_table%>% 
       mutate(
@@ -179,7 +181,7 @@ app_server <- function(input, output, session) {
         image = ifelse(
           grepl("^<img src=", Info_table$Image),
           sub("^<img src=\"([^\"]+)\".*$", "\\1", Info_table$Image),
-          sprintf("www/img/%s.png", id)
+          paste0("www/img/", id,".png")
         ),
         #Images are in inst/app/www in the format <ID>.png
         x = data$CaNSample$CaNmod$components_param$X * 1000,
