@@ -4,14 +4,14 @@
 \alias{Proportion_plot}
 \title{Proportion Plot}
 \usage{
-Proportion_plot(Data, info, session)
+Proportion_plot(Data, session)
 }
 \arguments{
 \item{Data}{RCaNSample_long data-frame calculated from the RData RCaNSample.}
 
-\item{info}{A data frame that contains additional metadata for each target. It should have the columns `series`, `FullName`, and `Color`.}
-
 \item{session}{The Shiny session object, used for responsive plot sizing based on the UI.}
+
+\item{info}{A data frame that contains additional metadata for each target. It should have the columns `series`, `FullName`, and `Color`.}
 }
 \value{
 A ggplot object representing the proportion bar plot.

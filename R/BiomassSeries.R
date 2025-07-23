@@ -31,72 +31,60 @@ BiomassSeries <- function(Data,
   # Select 3 sample lines for consistent overlay in the plot
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
-  # Rename the ID to a value compatible with the data for further left_join
-  info <- info %>%
-    rename(series = ID)
     
   
   Data <- data.table(Data)
   
   # Filter the data to include only biomasses of targeted species
-  Filtered_data <- Data[Var %in% param, .(
-    series = Var,
+  Biomass_data <- Data[Var %in% param, .(
+    ID = Var,
     value = value,
     Year = Year,
     Sample_id = Sample_id
   )]
   
+  Biomass_data[, Year := as.numeric(Year)]
+  
   # If no matching data is found, stop and display an error message
-  if (nrow(Filtered_data) == 0)
+  if (nrow(Biomass_data) == 0)
     stop("param not recognized")
+  
+  
+  Biomass_data <- merge(Biomass_data, info, by = "ID", all.x = TRUE)
+  Biomass_data[, `:=`(series = FullName)]
+  Biomass_data[, c("FullName","ID") := NULL]
   
   # If grouping is enabled, summarize the data by year and sample ID
   if (group == TRUE & length(param)>1) {
     
-    Prey_prop <- Filtered_data[, .(value = mean(value)), by = .(Year, series)]
-    setnames(Prey_prop, "series", "target")
+    Series_prop <- Biomass_data[, .(value = mean(value)), by = .(Year, series, Color)]
+    setnames(Series_prop, "series", "target")
+    setnames(Series_prop, "Color", "Color_target")
     
-    Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year, Sample_id)]#Sum the biomasses
+    Biomass_data <- Biomass_data[, .(value = sum(value)), by = .(Year, Sample_id)]#Sum the biomasses
     
-    Filtered_data[, series := grouplabel] # Set the grouped label for the series
-    
-    # Add the grouped label information to the 'info' data frame
-    info <- rbind(
-      info,
-      tibble::tibble(
-        series = grouplabel,
-        FullName = grouplabel,
-        Color = "#27548A"
-      )
-    )
+    Biomass_data$Color = "#27548A"
+    Biomass_data$series = grouplabel
   }
   
   # Calculate quantiles (0%, 2.5%, 25%, 50%, 75%, 97.5%, and 100%) for biomass over time
-  quantiles <- Filtered_data %>%
+  quantiles <- Biomass_data %>%
     group_by(Year, series) %>%
     summarise(quantiles = list(stats::quantile(
       value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1)
     )),
     .groups = "drop") %>%
-    unnest_wider(quantiles) %>%
-    mutate(Year = as.numeric(Year))
+    unnest_wider(quantiles)
   
   colnames(quantiles)[(ncol(quantiles) - 6):ncol(quantiles)] <-
     c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100")
   
-  # Merge the quantiles with species information
-  quantiles <- quantiles %>%
-    left_join(info, by = "series")
-  
-  
-  # Merge the filtered data with species information
-  Filtered_data <- Filtered_data %>%
-    left_join(info, by = "series")
+
   
   # Generate the plot using the 'Quantiles_plot' function
   g1 <- Quantiles_plot(
     quantiles,
-    Filtered_data,
+    Biomass_data,
     selectedsamples,
     facet = facet,
     ylab = ylab,
@@ -105,7 +93,7 @@ BiomassSeries <- function(Data,
   
   
   if (group==TRUE & length(param)>1){
-    g2<-Proportion_plot(Prey_prop, info = info, session = session)
+    g2<-Proportion_plot(Series_prop,  session = session)
     g<- g1 + g2
   }else{
     g<-g1

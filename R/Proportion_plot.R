@@ -13,35 +13,31 @@
 #' @return A ggplot object representing the proportion bar plot.
 #'
 #'
-Proportion_plot <- function(Data, info, session) {
+Proportion_plot <- function(Data, session) {
   width <- session$clientData$output_Plots_width # Get the width of the plot from the session to adjust text sizes accordingly
   axistitle_size <- max(ceiling(width / 60), 12)  # Adjust axis title size
   text_size <- max(ceiling(width / 80), 12)  # Adjust axis text size
   
-  info <- info %>% #Rename the metadata to assign a name to the preys or predators
-    rename(target = series)
 
   
   Data <- Data %>%
-    select(Year, target, value) %>%
+    select(Year, target, value,Color_target) %>%
     group_by(Year) %>%
     mutate(proportion = value / sum(value, na.rm = TRUE)) %>%
-    ungroup() %>%
-    left_join(info, by = "target") %>%
-    mutate(Year = as.numeric(Year))
-  
-  color_vec <- setNames(Data$Color, Data$target)
-  color_vec <- color_vec[!duplicated(names(color_vec))]
-  label_vec <- setNames(Data$FullName, Data$target)
-  label_vec <- label_vec[!duplicated(names(label_vec))]
-  
-  
+    ungroup()
+
+  # Create named vector of colors with target names
+  color_map <- unique(Data[, c("target", "Color_target")])
+  # Convert to named vector for scale_fill_manual
+  color_map <- setNames(color_map$Color_target, color_map$target)
+
+
   g <- ggplot(Data, aes(x = Year, y = proportion, fill = target)) +
     geom_bar(stat = "identity",
              width = 1,
              colour = "black") +
     labs(y = "", x = "Year") +
-    scale_fill_manual(values = color_vec, labels = label_vec) +
+    scale_fill_manual(values = color_map) +
     theme_classic() +
     theme(
       axis.text.x = element_text(angle = 0, hjust = 0.5),

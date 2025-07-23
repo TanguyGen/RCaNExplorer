@@ -7,13 +7,13 @@
 Quantiles_plot(quantiles, Data, selectedsamples, facet, ylab, session)
 }
 \arguments{
-\item{quantiles}{A data frame containing quantile values (e.g., q0, q2.5, q25, q50, q75, q97.5, q100). Must include columns `Year`, `FullName`, and the quantiles.}
+\item{quantiles}{A data frame containing quantile values (e.g., q0, q2.5, q25, q50, q75, q97.5, q100). Must include columns `Year`, `series`, and the quantiles.}
 
 \item{Data}{RCaNSample_long data-frame computed from the RData RCaNSample.}
 
 \item{selectedsamples}{A vector of random trajectories IDs (e.g., 1, 2, 3) that will be used to plot trajectories.}
 
-\item{facet}{A logical value indicating whether the plot should be faceted by `FullName`.}
+\item{facet}{A logical value indicating whether the plot should be faceted by `series`.}
 
 \item{ylab}{A character string for the label of the y-axis.}
 

@@ -33,9 +33,6 @@ ConsumptionSeries <- function(Data,
                               session) {
   # Select a few sample lines for overlay in the plot
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
-  # Rename the ID to a value compatible with the data for further left_join
-  info <- info %>%
-    rename(series = ID)
   
   # Transform to data.table for faster computing
   Data <- data.table::as.data.table(Data)
@@ -44,82 +41,78 @@ ConsumptionSeries <- function(Data,
   pattern <- paste0("_(", paste(param, collapse = "|"), ")$")
   
   # Filter the data to include only rows with containing the fluxes from the targeted species
-  Filtered_data <- Data[grepl(pattern, Var), # Use grepl for faster pattern matching
-                        .(target = tstrsplit(Var, "_")[[1]],
-                          # Extract the target (prey)
-                          series = tstrsplit(Var, "_")[[2]],
-                          # Extract the series (predator)
+  Consumption_data <- Data[grepl(pattern, Var), # Use grepl for faster pattern matching
+                        .(ID = tstrsplit(Var, "_")[[1]],  # Extract the prey
+                          series = tstrsplit(Var, "_")[[2]], # Extract the series (predator)
                           Year = Year,
                           #Keep the other variables in the Data
                           Sample_id = Sample_id,
                           value = value
                         )]
   # If no matching data is found, stop and display an error message
-  if (nrow(Filtered_data) == 0)
+  if (nrow(Consumption_data) == 0)
     stop("param not recognized")
+  
+  Consumption_data[, Year := as.numeric(Year)]
+  
+  # Join species info for Prey
+  Consumption_data <- merge(Consumption_data, info, by = "ID", all.x = TRUE)
+  Consumption_data[, `:=`(target = FullName,
+                          Color_target=Color,
+              ID = series  # Update ID to Predator ID for next join
+  )]
+  
+  # Drop unused columns before next merge
+  Consumption_data[, c("FullName", "Color") := NULL]
+  
+  # Join species info for Predator
+  Consumption_data <- merge(Consumption_data, info, by = "ID", all.x = TRUE)
+  # Final assignments
+  Consumption_data[, `:=`(series = FullName)]
+  Consumption_data[, c("FullName") := NULL]
   
   # If grouping is enabled, summarize the data by targeted species
   if (group == TRUE & length(param)>1) {
     
     # Summarize by Year and Sample_id
-    Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year,target, Sample_id)]
+    Consumption_data <- Consumption_data[, .(value = sum(value)), by = .(Year,target, Sample_id,Color_target)]
     
     # Add the 'series' column with grouped label
-    Filtered_data[, series := grouplabel]
+    Consumption_data[, series := grouplabel]
     
-    # Add the grouped label information to the 'info' data frame and a color
-    info <- bind_rows(
-      info,
-      tibble::tibble(
-        series = grouplabel,
-        FullName = grouplabel,
-        Color = "#27548A"
-      )
-    )
+    # Add the grouped label information to the data
+    Consumption_data$Color = "#27548A"
+    Consumption_data$series = grouplabel
+    
   }
   
   # Create a list of plots for each unique series
-  listplot <- unique(Filtered_data$series) %>%
+  listplot <- unique(Consumption_data$series) %>%
     purrr::map(function(.x) {
       # Calculate quantiles for the current series
-      quantiles <- Filtered_data %>%
-        filter(series == .x) %>%
-        group_by(Year, Sample_id, series) %>%
-        summarise(value = sum(value), .groups = "drop") %>%
-        group_by(Year, series) %>%
-        summarise(quantiles = list(stats::quantile(
-          value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1)
-        )),
-        .groups = "drop") %>%
-        unnest_wider(quantiles) %>%  # Unnest the quantiles into separate columns
-        mutate(Year = as.numeric(Year))
       
-      # Rename the quantile columns for clarity
-      colnames(quantiles)[(ncol(quantiles) - 6):ncol(quantiles)] <- c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100")
+      Data_total <- Consumption_data[series == .x,
+                                     .(value = sum(value)),
+                                     by = .(Year, Sample_id, series, Color)]
       
-      # Merge the quantiles with species information
-      quantiles <- quantiles %>%
-        left_join(info, by = "series")
+      # Calculate quantiles by Year and series
+      quantiles <- Data_total[, .(
+        quantiles = list(quantile(value, probs = c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1)))
+      ), by = .(Year, series)]
       
-      # Prepare total consumption data for the plot
-      Data_total <- Filtered_data %>%
-        filter(series == .x) %>%
-        group_by(Year, Sample_id, series) %>%
-        summarise(value = sum(value), .groups = "drop") %>%
-        left_join(info, by = "series")
+      # Expand quantiles into separate columns
+      quantiles[, c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100") := transpose(quantiles)]
       
+      # Remove the list column
+      quantiles[, quantiles := NULL]
+      
+
       # Prepare average consumption data by prey species
-      Data_byprey <- Filtered_data %>%
+      Data_byprey <- Consumption_data %>%
         filter(series == .x) %>%
-        group_by(Year, target, series) %>%
-        summarise(value = mean(value), .groups = "drop") %>%
-        left_join(info, by = "series")
-      
-      # Get the full name of the species for the plot title
-      name <- info %>%
-        filter(series == .x) %>%
-        pull(FullName)
-      
+        group_by(Year, target, series, Color,Color_target) %>%
+        summarise(value = mean(value), .groups = "drop")
+
       # Create the quantile plot for total consumption
       p1 <- Quantiles_plot(quantiles,
                            Data_total,
@@ -127,22 +120,17 @@ ConsumptionSeries <- function(Data,
                            facet,
                            ylab,
                            session = session) +
-        ggtitle(name)
+        ggtitle(.x)
       
+
       # Create the proportion plot for consumption by prey species
-      p2 <- Proportion_plot(Data_byprey, info = info, session = session)
-      
+      p2 <- Proportion_plot(Data_byprey,  session = session)
+
       # Combine the two plots using patchwork layout
       p <- p1 + p2
-      print(Data_byprey)
       return(p)
     })
   
-  # Get the names of the selected species from 'info'
-  Names <- info %>%
-    filter(series %in% param) %>%
-    distinct(FullName) %>%
-    pull(FullName)
   
   # Adjust the title size based on plot width
   width <- session$clientData$output_Graphs_width

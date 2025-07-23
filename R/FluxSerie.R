@@ -36,64 +36,76 @@ FluxSerie <- function(Data,
   info <- as.data.table(info)
   
   # Filter only needed rows
-  Filtered_data <- Data[Var %in% param]
+  Flux_data <- Data[Var %in% param]
+  
+  Flux_data[, Year := as.numeric(Year)]
   
   # Split Var into Prey (ID) and Predator
-  Filtered_data[, c("ID", "Predator") := tstrsplit(Var, "_")]
+  Flux_data[, c("ID", "Predator") := tstrsplit(Var, "_")]
   
   # Join species info for Prey
-  Filtered_data <- merge(Filtered_data, info, by = "ID", all.x = TRUE)
-  Filtered_data[, `:=`(PreyName = FullName,
+  Flux_data <- merge(Flux_data, info, by = "ID", all.x = TRUE)
+  Flux_data[, `:=`(PreyName = FullName,
                        Prey = ID,
                        ID = Predator  # Update ID to Predator ID for next join
                        )]
   
   
   # Drop unused columns before next merge
-  Filtered_data[, c("FullName", "Color") := NULL]
+  Flux_data[, c("FullName", "Color") := NULL]
   
   # Join species info for Predator
-  Filtered_data <- merge(Filtered_data, info, by = "ID", all.x = TRUE)
+  Flux_data <- merge(Flux_data, info, by = "ID", all.x = TRUE)
   # Final assignments
-  Filtered_data[, `:=`(Predator = ID,
+  Flux_data[, `:=`(Predator = ID,
                        PredatorName = FullName,
                        Color = "#27548A")]
   
-  Filtered_data[, `:=`(FullName = stringr::str_wrap(paste0("From ", PreyName, " to ", PredatorName), width = 30))]
+  Flux_data[, `:=`(series = stringr::str_wrap(paste0("From ", PreyName, " to ", PredatorName), width = 30))]
   
   if (group == TRUE & length(param)>1) {
-    Filtered_data <- Filtered_data[, .(value = sum(value)), by = .(Year, Sample_id)]
-    Filtered_data[, `:=`(FullName=grouplabel,
+    Series_prop <- Flux_data[, .(value = mean(value)), by = .(Year, series, Color)]
+    setnames(Series_prop, "series", "target")
+    setnames(Series_prop, "Color", "Color_target")
+    
+    Flux_data <- Flux_data[, .(value = sum(value)), by = .(Year, Sample_id)]
+    Flux_data[, `:=`(series=grouplabel,
                          Color="#27548A"
     )]
   }
   
   # Check if the data contains any valid fluxes, stop with an error message if not
-  if (nrow(Filtered_data) == 0) {
+  if (nrow(Flux_data) == 0) {
     stop("param not recognized")
   }
   
   # Calculate quantiles for the flux time series (0%, 2.5%, 25%, 50%, 75%, 97.5%, 100%)
-  quantiles <- Filtered_data %>%
-    group_by(Year, FullName, Color) %>%
+  quantiles <- Flux_data %>%
+    group_by(Year, series, Color) %>%
     summarise(quantiles = list(stats::quantile(value, c(
       0, 0.025, 0.25, 0.5, 0.75, 0.975, 1
     ))), .groups = "drop") %>%
-    unnest_wider(quantiles) %>%  # Unnest the quantiles into separate columns
-    mutate(Year = as.numeric(Year))
+    unnest_wider(quantiles)
   
   # Rename the quantile columns
   colnames(quantiles)[(ncol(quantiles) - 6):ncol(quantiles)] <- c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100")
   
   # Generate plot
-  g <- Quantiles_plot(
+  g1 <- Quantiles_plot(
     quantiles,
-    Filtered_data,
+    Flux_data,
     selectedsamples,
     facet = facet,
     ylab = ylab,
     session = session
   )
+  
+  if (group==TRUE & length(param)>1){
+    g2<-Proportion_plot(Series_prop,  session = session)
+    g<- g1 + g2
+  }else{
+    g<-g1
+  }
   
   return(g)
 }

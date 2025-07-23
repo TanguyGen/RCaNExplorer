@@ -3,10 +3,10 @@
 #' This function generates a plot with confidence ribbons for quantiles (0%, 2.5%, 25%, 50%, 75%, 97.5%, 100%)
 #' and sample lines representing selected data. It includes options to facet the plot and customize axis labels.
 #'
-#' @param quantiles A data frame containing quantile values (e.g., q0, q2.5, q25, q50, q75, q97.5, q100). Must include columns `Year`, `FullName`, and the quantiles.
+#' @param quantiles A data frame containing quantile values (e.g., q0, q2.5, q25, q50, q75, q97.5, q100). Must include columns `Year`, `series`, and the quantiles.
 #' @param Data RCaNSample_long data-frame computed from the RData RCaNSample.
 #' @param selectedsamples A vector of random trajectories IDs (e.g., 1, 2, 3) that will be used to plot trajectories.
-#' @param facet A logical value indicating whether the plot should be faceted by `FullName`.
+#' @param facet A logical value indicating whether the plot should be faceted by `series`.
 #' @param ylab A character string for the label of the y-axis.
 #' @param session The Shiny session object, passed to retrieve the width of the plot area from the client.
 #'
@@ -34,7 +34,7 @@ Quantiles_plot <- function(quantiles,
                   x = Year,
                   ymin = q0,
                   ymax = q100,
-                  fill = FullName
+                  fill = series
                 ),
                 alpha = 0.33) +
     geom_ribbon(
@@ -43,7 +43,7 @@ Quantiles_plot <- function(quantiles,
         x = Year,
         ymin = q2.5,
         ymax = q97.5,
-        fill = FullName
+        fill = series
       ),
       alpha = 0.33
     ) +
@@ -52,38 +52,38 @@ Quantiles_plot <- function(quantiles,
                   x = Year,
                   ymin = q25,
                   ymax = q75,
-                  fill = FullName
+                  fill = series
                 ),
                 alpha = 0.33) +
     ylab(ylab)
   
   # Facet option
   if (facet) {
-    g <- g + facet_wrap( ~ FullName, scales = "free", ncol = 2)
+    g <- g + facet_wrap( ~ series, scales = "free", ncol = 2)
   }
   
   # Prepare sample lines
   fewseries <- Data %>%
     filter(Sample_id %in% selectedsamples) %>%
-    pivot_wider(names_from = Sample_id, values_from = value) %>%
-    mutate(Year = as.numeric(Year))
+    pivot_wider(names_from = Sample_id, values_from = value) 
+  
   
   # Rename last columns to S1, S2, S3
   colnames(fewseries)[(ncol(fewseries) - 2):ncol(fewseries)] <- c("S1", "S2", "S3")
   
   color_map <- fewseries %>%
-    distinct(FullName, Color) %>%
+    distinct(series, Color) %>%
     tibble::deframe()
   # Add sample lines to plot
   g <- g +
     geom_path(data = fewseries,
-              aes(x = Year, y = S1, group = FullName),
+              aes(x = Year, y = S1, group = series),
               lty = "solid") +
     geom_path(data = fewseries,
-              aes(x = Year, y = S2, group = FullName),
+              aes(x = Year, y = S2, group = series),
               lty = "twodash") +
     geom_path(data = fewseries,
-              aes(x = Year, y = S3, group = FullName),
+              aes(x = Year, y = S3, group = series),
               lty = "longdash") +
     ylim(0, NA) +
     theme_classic() +

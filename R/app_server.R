@@ -271,7 +271,8 @@ app_server <- function(input, output, session) {
           "Consumption Series",
           "Predation and Catch Series",
           "Ratio Consumption/Biomass",
-          "Ratio Production/Biomass"
+          "Ratio Production/Biomass",
+          "Mortality"
         ),
         selected = "Select an option..."
       )
@@ -377,6 +378,16 @@ app_server <- function(input, output, session) {
     } else if (input$Typegraph == "Ratio Production/Biomass") {
       #Call the function to create Ratio Production/Biomass plots
       RatioProductionBiomass(
+        data$CaNSample_long,
+        ecosystem_components,
+        info = Info_table,
+        group = input$groupspecies,
+        grouplabel = input$groupname,
+        session = session
+      )
+    }else if (input$Typegraph == "Mortality") {
+      #Call the function to create Ratio Production/Biomass plots
+      MortalitySeries(
         data$CaNSample_long,
         ecosystem_components,
         info = Info_table,
@@ -497,3 +508,4 @@ app_server <- function(input, output, session) {
     }
   )
 }
+
