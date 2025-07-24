@@ -32,98 +32,83 @@ RatioProductionBiomass <- function(Data,
                                    ylab = "Unitless",
                                    facet = TRUE,
                                    session) {
-  # Take some random lines that can be drawn consistently among series
+  # Select 3 random samples for illustrative trajectories
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
-  # Rename the ID to a value compatible with the data for further left_join
-  info <- info %>%
-    rename(series = ID)
-  
-  # Transform to data.table for faster computing
+  # Ensure Data is a data.table
   Data <- data.table::as.data.table(Data)
   
-  #Get the Biomass of each selected species
-  Biomasses <- Data[Var %in% param, .(
-    series = Var,
+  # --- Biomass Extraction ---
+  Biomass <- Data[Var %in% param, .(
+    ID = Var,
     biomass = value,
-    Year = Year,
-    Sample_id = Sample_id
+    Year = as.numeric(Year),
+    Sample_id
+  )]
+  Biomass <- merge(Biomass, info, by = "ID", all.x = TRUE)
+  Biomass[, series := FullName]
+  Biomass[, c("FullName", "ID") := NULL]
+  
+  # --- Production Extraction ---
+  pattern <- paste0("^(", paste(param, collapse = "|"), ")_")
+  Productions <- Data[grepl(pattern, Var), .(
+    ID = tstrsplit(Var, "_")[[1]],
+    Predator = tstrsplit(Var, "_")[[2]],
+    value = value,
+    Year = as.numeric(Year),
+    Sample_id
   )]
   
-  #  Create the patterns of interest <Prey>_<Targeted species>
-  pattern <- paste0("^(", paste(param, collapse = "|"), ")_") #Get the patterns of interest <Prey>_<Targeted species>
+  if (nrow(Productions) == 0) stop("param not recognized")
   
-  # Filter the data to include only rows with containing the fluxes to the targeted species
-  Productions <- Data[grepl(pattern, Var), # Use grepl for pattern matching
-                      .(series = tstrsplit(Var, "_")[[1]],
-                        # Extract the Prey
-                        Predator = tstrsplit(Var, "_")[[2]],
-                        # Extract the Predator
-                        value = value,
-                        Year = Year,
-                        Sample_id = Sample_id
-                      )]
-  Productions <- Productions[, .(production = sum(value)), by = .(series, Year, Sample_id)] #sum the values of predators
-  # Merge the tables
-  merged_data <- full_join(Biomasses, Productions, by = c("series", "Year", "Sample_id")) %>% #Join the biomasses and productions for each species
-    replace_na(list(biomass = 0, production = 0)) %>%
-    filter(Year != max(Year)) #Remove the last year because it only contain the biomass
+  Productions <- merge(Productions, info, by = "ID", all.x = TRUE)
+  Productions[, series := FullName]
+  Productions[, c("FullName", "ID") := NULL]
   
+  Productions <- Productions[, .(
+    production = sum(value)
+  ), by = .(series, Year, Sample_id, Color)]
   
-  #Merge the series if the user choose to group the species into a super species
-  if (group == TRUE & length(param)>1) {
-    merged_data <- merged_data %>%
-      group_by(Year, Sample_id) %>%
-      summarise(#Sum all the biomasses and productions for each year and iterations
-        biomass = sum(biomass),
-        production = sum(production)) %>%
-      ungroup() %>%
-      mutate(series = grouplabel) %>%
-      select(series, biomass, production, Year, Sample_id)
-    
-    #Create a new line in the metadata describing the new superspecies
-    info <- bind_rows(
-      info,
-      tibble::tibble(
-        series = grouplabel,
-        FullName = grouplabel,
-        Color = "#27548A"
-      )
-    )
+  # --- Merge Biomass and Production ---
+  merged_data <- merge(Biomass, Productions,
+                       by = c("series", "Year", "Sample_id", "Color"),
+                       all = TRUE)
+  merged_data[is.na(merged_data)] <- 0
+  merged_data <- merged_data[Year != max(Year)]
+  
+  # --- Optional Grouping ---
+  if (group == TRUE & length(param) > 1) {
+    merged_data <- merged_data[, .(
+      biomass = sum(biomass),
+      production = sum(production)
+    ), by = .(Year, Sample_id)]
+    merged_data[, `:=`(
+      series = grouplabel,
+      Color = "#27548A"
+    )]
+    setcolorder(merged_data, c("series", "biomass", "production", "Year", "Color", "Sample_id"))
   }
   
-  #Calculate the ratio production/biomass for each series
-  ratio_data <- merged_data %>%
-    mutate(value = production / biomass) %>%
-    select(series, value, Year, Sample_id)
+  # --- Compute Ratio ---
+  merged_data[, value := production / biomass]
+  ratio_data <- merged_data[, .(series, value, Year, Sample_id, Color)]
   
-  # Calculate the quantiles (0%, 2.5%, 25%, 50%, 75%, 97.5%, 100%) for each series,
-  # indicating the value below which the specified percentage of iterations fall.
-  quantiles <- ratio_data %>%
-    group_by(Year, series) %>%
-    summarise(quantiles = list(quantile(value, c(
-      0, .025, 0.25, .50, .75, .975, 1
-    ))), .groups = "drop") %>%
-    unnest_wider(quantiles) %>% # Unnest the quantiles into separate columns
-    mutate(Year = as.numeric(Year))
-  colnames(quantiles)[(ncol(quantiles) - 6):ncol(quantiles)] <- c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100") #rename the quantiles
+  # --- Quantile Calculation ---
+  quantiles <- ratio_data[, as.list(quantile(value, probs = c(0, .025, .25, .5, .75, .975, 1))),
+                          by = .(Year, series, Color)]
+  setnames(quantiles,
+           old = c("0%", "2.5%", "25%", "50%", "75%", "97.5%", "100%"),
+           new = c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100"))
   
-  quantiles <- quantiles %>%
-    left_join(info, by = "series") #Add metadata to all the series in order to obtain their fullnames and associated color
-  
-  
-  ratio_data <- ratio_data %>%
-    left_join(info, by = "series") #Add metadata to all the series  in order to obtain their fullnames and associated color
-  
-  
+  # --- Plot ---
   g <- Quantiles_plot(
     quantiles,
     ratio_data,
     selectedsamples,
-    facet = TRUE,
+    facet = facet,
     ylab = "Ratio Production/Biomass",
-    session
-  ) #Make the plot
+    session = session
+  )
   
   return(g)
 }
