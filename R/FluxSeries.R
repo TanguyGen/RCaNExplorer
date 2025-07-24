@@ -58,10 +58,32 @@ FluxSerie <- function(Data,
   Flux_data <- merge(Flux_data, info, by = "ID", all.x = TRUE)
   # Final assignments
   Flux_data[, `:=`(Predator = ID,
-                       PredatorName = FullName,
-                       Color = "#27548A")]
+                       PredatorName = FullName)]
+  Flux_data[, c("FullName", "Color") := NULL]
   
   Flux_data[, `:=`(series = stringr::str_wrap(paste0("From ", PreyName, " to ", PredatorName), width = 30))]
+  
+  colors_vector <- c(
+    "#5050ff", "#ce3d32", "#749b58", "#f0e685", "#466983", "#ba6338", "#5db1dd",
+    "#802268", "#6bd76b", "#d595a7", "#924822", "#837b8d", "#c75127", "#d58f5c",
+    "#7a65a5", "#e4af69", "#3b1b53", "#cddeb7", "#612a79", "#ae1f63", "#e7c76f",
+    "#5a655e", "#cc9900", "#99cc00", "#a9a9a9", "#cc9900", "#99cc00", "#33cc00",
+    "#00cc33", "#00cc99", "#0099cc", "#0a47ff", "#4775ff", "#ffc20a", "#ffd147",
+    "#990033", "#991a00", "#996600", "#809900", "#339900", "#00991a", "#009966",
+    "#008099", "#003399", "#1a0099", "#660099", "#990080", "#d60047", "#ff1463",
+    "#00d68f", "#14ffb1"
+  )
+  
+  # Assign colors to series (loop through colors_vector if more fluxes than colors)
+  unique_series <- unique(Flux_data$series)
+  n_fluxes <- length(unique_series)
+  assigned_colors <- colors_vector[ (seq_len(n_fluxes) - 1) %% length(colors_vector) + 1 ]
+  
+  color_map <- data.table(series = unique_series, Color = assigned_colors)
+  
+  # Merge assigned colors back into Flux_data
+  Flux_data <- merge(Flux_data, color_map, by = "series", all.x = TRUE)
+  
   
   if (group == TRUE & length(param)>1) {
     Series_prop <- Flux_data[, .(value = mean(value)), by = .(Year, series, Color)]

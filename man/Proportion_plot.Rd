@@ -11,12 +11,12 @@ Proportion_plot(Data, session)
 
 \item{session}{The Shiny session object, used for responsive plot sizing based on the UI.}
 
-\item{info}{A data frame that contains additional metadata for each target. It should have the columns `series`, `FullName`, and `Color`.}
+\item{info}{A data frame that contains additional metadata for each target. It should have the columns  `value` ,`series`, `Year`, `target`, and `Color`.}
 }
 \value{
 A ggplot object representing the proportion bar plot.
 }
 \description{
 Creates a bar plot showing the proportion of the value of each targetted species relative to the total for each year.
-This function makes proportion plots for the functions ConsumptionSeries and ProductionSeries.
+This function makes proportion plots for the functions ConsumptionSeries,ProductionSeries, BiomassSeries and FluxSeries.
 }

@@ -1,10 +1,10 @@
 #' Proportion Plot
 #'
 #' Creates a bar plot showing the proportion of the value of each targetted species relative to the total for each year.
-#' This function makes proportion plots for the functions ConsumptionSeries and ProductionSeries.
+#' This function makes proportion plots for the functions ConsumptionSeries,ProductionSeries, BiomassSeries and FluxSeries.
 #'
 #' @param Data RCaNSample_long data-frame calculated from the RData RCaNSample.
-#' @param info A data frame that contains additional metadata for each target. It should have the columns `series`, `FullName`, and `Color`.
+#' @param info A data frame that contains additional metadata for each target. It should have the columns  `value` ,`series`, `Year`, `target`, and `Color`.
 #' @param session The Shiny session object, used for responsive plot sizing based on the UI.
 #'
 #' @import dplyr
@@ -15,6 +15,7 @@
 #'
 Proportion_plot <- function(Data, session) {
   width <- session$clientData$output_Plots_width # Get the width of the plot from the session to adjust text sizes accordingly
+  title_size <- max(ceiling(width / 40), 16)  # Adjust title size based on plot width
   axistitle_size <- max(ceiling(width / 60), 12)  # Adjust axis title size
   text_size <- max(ceiling(width / 80), 12)  # Adjust axis text size
   
@@ -47,6 +48,7 @@ Proportion_plot <- function(Data, session) {
         linetype = 'dashed'
       ),
       strip.background = element_blank(),
+      title = element_text(size = title_size),
       axis.title = element_text(size = axistitle_size),
       axis.text = element_text(size = text_size),
       legend.title = element_blank(),

@@ -4,7 +4,16 @@
 \alias{MortalitySeries}
 \title{MortalitySeries Function}
 \usage{
-MortalitySeries(Data, param, info, group, grouplabel, facet = FALSE, session)
+MortalitySeries(
+  Data,
+  param,
+  info,
+  group,
+  grouplabel,
+  ylab = "Mortality",
+  facet = FALSE,
+  session
+)
 }
 \arguments{
 \item{Data}{RCaNSample_long data-frame computed from the RData RCaNSample}

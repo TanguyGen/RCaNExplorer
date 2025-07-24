@@ -61,12 +61,10 @@ Quantiles_plot <- function(quantiles,
   if (facet) {
     g <- g + facet_wrap( ~ series, scales = "free", ncol = 2)
   }
-  
   # Prepare sample lines
   fewseries <- Data %>%
     filter(Sample_id %in% selectedsamples) %>%
     pivot_wider(names_from = Sample_id, values_from = value) 
-  
   
   # Rename last columns to S1, S2, S3
   colnames(fewseries)[(ncol(fewseries) - 2):ncol(fewseries)] <- c("S1", "S2", "S3")
@@ -74,6 +72,8 @@ Quantiles_plot <- function(quantiles,
   color_map <- fewseries %>%
     distinct(series, Color) %>%
     tibble::deframe()
+
+
   # Add sample lines to plot
   g <- g +
     geom_path(data = fewseries,

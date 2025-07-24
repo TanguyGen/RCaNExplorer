@@ -26,6 +26,7 @@ MortalitySeries <- function(Data,
                             info,
                             group,
                             grouplabel,
+                            ylab="Mortality",
                             facet = FALSE,
                             session) {
   
@@ -55,21 +56,6 @@ MortalitySeries <- function(Data,
   
   Biomass[, c("FullName", "ID") := NULL]
   
-  #Biomass at the beginning of Year y+1
-  Biomasst1 <- Biomass[
-    , .(series, Sample_id, Year, biomass, Color)
-  ][
-    , .(series, Sample_id, Year = Year - 1, biomasst1 = biomass, Color)
-  ][
-    Biomass, on = c("series", "Sample_id", "Year","Color"), nomatch = 0
-  ][
-    , .(series, Sample_id, Year, biomasst1, Color)
-  ]
-
-  Biomass <- Biomass[
-    , .SD[Year < max(Year)], 
-    by = .(series, Sample_id)
-  ]
 
   #  Create the patterns of interest <Prey>_<Predator>
   pattern <- paste0("^(", paste(param, collapse = "|"), ")_") 
@@ -104,34 +90,50 @@ MortalitySeries <- function(Data,
     # Summarize by Year and Sample_id
     Biomass <- Biomass[, .(biomass = sum(biomass)), by = .(Year, Sample_id)]
     Flow <- Flow[, .(value = sum(value)), by = .(Year,predator, Sample_id,PredatorID)]
-    
     # Add the grouped label information to the 'info' data frame
     Biomass$Color = "#27548A"
     Flow$Color = "#27548A" 
     
     Biomass$series = grouplabel
     Flow$series = grouplabel
+
   }
+  
+  #Biomass at the beginning of Year y+1
+  Biomasst1 <- Biomass[
+    , .(series, Sample_id, Year, biomass, Color)
+  ][
+    , .(series, Sample_id, Year = Year - 1, biomasst1 = biomass, Color)
+  ][
+    Biomass, on = c("series", "Sample_id", "Year","Color"), nomatch = 0
+  ][
+    , .(series, Sample_id, Year, biomasst1, Color)
+  ]
+  
+  Biomass <- Biomass[
+    , .SD[Year < max(Year)], 
+    by = .(series, Sample_id)
+  ]
+  
   # Separate flows into catches and predation
   Catches <- Flow[
-    startsWith(PredatorID, "F"), #!!! Issue here if predator name starts with letter F (ex: Fish)
-    .(catches=value,
-      C = sum(value, na.rm = TRUE)),
-    by = .(Year, Sample_id, series,Color)
+    startsWith(PredatorID, "F"),
+    .(C = sum(value, na.rm = TRUE)),
+    by = .(Year, Sample_id, series, Color)
   ][, C := fifelse(is.na(C), 0, C)]
-  
 
   Predation <- Flow[
     !startsWith(PredatorID, "F"),
-    .(predation=value,
-      P = sum(value, na.rm = TRUE)),
-    by = .(Year, Sample_id, series,Color)
+    .(P = sum(value, na.rm = TRUE)),
+    by = .(Year, Sample_id, series, Color)
   ][, P := fifelse(is.na(P), 0, P)]
+  
 
   Mortalities <- merge(Biomass, Biomasst1, by = c("Year", "Sample_id", "series","Color"), all.x = TRUE) # Join the total catch
   Mortalities <- merge(Mortalities, Catches, by = c("Year", "Sample_id", "series","Color"), all.x = TRUE) # Join the total catch
   Mortalities <- merge(Mortalities, Predation , by = c("Year", "Sample_id", "series","Color"), all.x = TRUE) # Join the total predation
   Mortalities[, `:=`(B = biomass, B.t1 = biomasst1)]
+  
 
   Mortalities[, `:=`(
     Z = -log(B.t1 / (B.t1 + C + P))
@@ -145,49 +147,80 @@ MortalitySeries <- function(Data,
   
   Mortalities <- Mortalities[, .SD, .SDcols = c("Year", "Sample_id", "Color","series","Z","F","M","G")]
   
-  
   # Create a list of plots for each unique series
   listplot <- unique(Mortalities$series) %>%
     purrr::map(function(.x) {
       
-      Mortalities<-Mortalities%>%
-        filter(series == .x) %>%
-        pivot_longer(cols = c(Z, F, M, G), names_to = "Mortality", values_to = "value")
-      # Calculate quantiles for the current series
-      quantiles <- Mortalities %>%
-        group_by(Year, series,Color,Mortality) %>%
-        summarise(quantiles = list(stats::quantile(
-          value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1)
-        )),
-        .groups = "drop") %>%
-        unnest_wider(quantiles)
+      mortal <- Mortalities[series == .x, 
+                            .(Mortality = rep(c("Z", "F", "M", "G"), each = .N),
+                              value = c(Z, F, M, G)),
+                            by = .(Year, series, Color,Sample_id)]
+      quantiles<-mortal
+      # Calculate quantiles by group with na.rm = TRUE to avoid errors
+      quantiles<-quantiles[, {
+        q <- stats::quantile(value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1), na.rm = TRUE)
+        .(q0 = q[1], q2.5 = q[2], q25 = q[3], q50 = q[4], q75 = q[5], q97.5 = q[6], q100 = q[7])
+      }, by = .(Year, series, Color, Mortality)]
       
+      Z_quantiles <- quantiles[Mortality == "Z"][, Mortality := NULL]
+
+      Z_mortal <- mortal[Mortality == "Z"][, Mortality := NULL]
       
-      # Rename the quantile columns for clarity
-      colnames(quantiles)[(ncol(quantiles) - 6):ncol(quantiles)] <- c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100")
-      
-      
-      # Create the quantile plot for total consumption
-      p1 <- Quantiles_plot(quantiles,
-                           Mortalities,
+      #Quantile plot for total mortality
+      p1 <- Quantiles_plot(Z_quantiles,
+                           Z_mortal,
                            selectedsamples,
                            facet,
                            ylab,
                            session = session)+
-        ggtitle(name)
-  
+        labs(title=.x,subtitle = "Total mortality")  
+      
+      
+      F_quantiles <- quantiles[Mortality == "F"][, Mortality := NULL]
+      F_mortal    <- mortal[Mortality == "F"][, Mortality := NULL]
+      
+      
+      
+      p2 <- Quantiles_plot(F_quantiles,
+                           F_mortal,
+                           selectedsamples,
+                           facet,
+                           ylab,
+                           session = session)+
+        labs(subtitle = "Fishing mortality")
+      
+      M_quantiles <- quantiles[Mortality == "M"][, Mortality := NULL]
+      M_mortal    <- mortal[Mortality == "M"][, Mortality := NULL]
+      
+      p3 <- Quantiles_plot(M_quantiles,
+                           M_mortal,
+                           selectedsamples,
+                           facet,
+                           ylab,
+                           session = session)+
+        labs(subtitle = "Natural mortality")  
+
+      Ratio_mortal<-mortal%>%
+        filter(Mortality %in% c("F","M"))%>%
+        group_by(Year, series,Color, Mortality) %>%
+        summarise(value = mean(value), .groups = "drop")%>%
+        ungroup()%>%
+        mutate(Color_target=if_else(Mortality=="M","#6c9a8b","#e8998d"))%>%
+        rename(target=Mortality)%>%
+        select(Year, series, target, Color_target, value)
+        
+      
+      p4<-Proportion_plot(Ratio_mortal,  session = session)+
+        labs(subtitle = "Mortality ratio") 
+        
+      
       
       # Combine the two plots using patchwork layout
-      p <- p1 
+      p <- (p1 + p2)/(p3+p4)
   
       return(p)
     })
   
-  # Get the names of the selected species from 'info'
-  Names <- info %>%
-    filter(series %in% param) %>%
-    distinct(FullName) %>%
-    pull(FullName)
   
   # Adjust the title size based on plot width
   width <- session$clientData$output_Graphs_width
@@ -196,7 +229,7 @@ MortalitySeries <- function(Data,
   # Combine all individual plots into a single plot with a title
   plot_result <- wrap_plots(listplot, ncol = 1) +
     plot_annotation(
-      title = "Consumption series",
+      title = "Mortality series",
       theme = theme(
         text = element_text(size = bigtitle_size)
       )
