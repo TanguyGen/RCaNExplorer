@@ -10,6 +10,7 @@
 app_server <- function(input, output, session) {
   options(shiny.maxRequestSize = 1000 * 1024 ^ 2)
   
+  #Store the data
   data <- reactiveValues(
     CaNSample = NULL,
     CaNSample_long = NULL,
@@ -18,6 +19,7 @@ app_server <- function(input, output, session) {
     Resolved_components = NULL
   )
   
+  #Function to simplify CaNSample object
   transform_CaNSample <- function(CaNSample) {
     m <- as.matrix(CaNSample$mcmc)
     fluxes_def <- CaNSample$CaNmod$fluxes_def
@@ -36,6 +38,7 @@ app_server <- function(input, output, session) {
       select(Sample_id, Var, Year, value, FluxTrophic)
   }
   
+  #Function to load CaNSample object
   load_CaNSample <- function(path_or_url) {
     e <- new.env()
     load(path_or_url, envir = e)
@@ -47,6 +50,7 @@ app_server <- function(input, output, session) {
     e[[objs[[1]]]]
   }
   
+  
   observe({
     obj <- NULL
     
@@ -54,19 +58,21 @@ app_server <- function(input, output, session) {
       obj <- load_CaNSample(input$rcanfile$datapath)
     } else if (is.null(data$CaNSample)) {
       local_file <- "CaNSample20240306.Rdata"
-      if (!file.exists(local_file)) {
+      if (!file.exists(local_file)) { #If the local file does not exist load from url
         obj <- load_CaNSample(url("https://ftp.nmdc.no/nmdc/IMR/modeldata/CaNSample20240306.Rdata"))
-      } else {
+      } else { #if it exists load from local
         obj <- load_CaNSample(local_file)
       }
     }
     
-    if (!is.null(obj)) {
+    #Assign to the reactive data "data" to store it
+    if (!is.null(obj)) { 
       data$CaNSample <- obj
       data$CaNSample_long <- transform_CaNSample(obj)
     }
   })
   
+  #Check wich ecosystem components are resolved in terms of biomass, production and consumption
   observe({
     req(data$CaNSample, data$CaNSample_long)
     comp <- data$CaNSample$CaNmod$components_param$Component
@@ -80,6 +86,7 @@ app_server <- function(input, output, session) {
       )
   })
   
+  #Filter the components which are resolved for the chosen representation
   observe({
     req(data$Resolution, input$Typegraph)
     type <- input$Typegraph
@@ -97,15 +104,18 @@ app_server <- function(input, output, session) {
       pull(Component)
   })
   
+  #Add graphics if the components are not described in the package
   observe({
-    if (!is.null(input$metadatafile) && length(input$metadatafile$datapath) == 1) {
-      table <- read.csv(input$metadatafile$datapath, stringsAsFactors = FALSE)
-    } else if (is.null(data$Info)) {
+    #load the Info data frame containing the IDs, FullNames, colours and images of the ecosystem components
+    if (!is.null(input$metadatafile) && length(input$metadatafile$datapath) == 1) { 
+      table <- read.csv(input$metadatafile$datapath, stringsAsFactors = FALSE) #Read uploaded table
+    } else if (is.null(data$Info)) { #load the default one
       table <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer'), stringsAsFactors = FALSE)
-    } else {
-      return()
+    } else { #load it only once
+      return() 
     }
     
+    #Check wich IDs from CaNSample are described in the metadata table
     comp <- data$CaNSample$CaNmod$components_param$Component
     if (!setequal(table$ID, comp)) {
       table <- table |> filter(ID %in% comp)
@@ -115,63 +125,70 @@ app_server <- function(input, output, session) {
         "#5050ff", "#ce3d32", "#749b58", "#f0e685", "#466983", "#ba6338", "#5db1dd",
         "#802268", "#6bd76b", "#d595a7", "#924822", "#837b8d", "#c75127", "#d58f5c"
       ), length.out = length(missing_ids))
-      
+      #If not recognised give them the ID from CaNSample, pass the ID as the FullName also and give a colour from the palette
       table <- bind_rows(table, tibble(ID = missing_ids, FullName = missing_ids, Color = palette))
     }
-    
+    #Load the images from the package
     img_dir <- system.file("app/www/img", package = "RCaNExplorer")
     existing_images <- list.files(img_dir)
     
+    #Check which imaes correspond to the Ids
     table$Image <- sprintf("www/img/%s.png", table$ID)
     table$Image <- ifelse(paste0(table$ID, ".png") %in% existing_images,
                           sprintf('<img src="%s" width="60px" />', table$Image),
-                          '<span style="color:gray;">No image</span>')
+                          '<span style="color:gray;">No image</span>') #If not existing assign a basic style
     
+    #Allow an uploaded image
     table$Upload <- sprintf(
       '<label class="custom-upload">Upload<input type="file" class="image-upload" data-id="%s" accept=".png,.jpg,.jpeg,.svg" style="display:none;" /></label>',
       table$ID
     )
-    
+    #Save the new table
     data$Info <- table
   })
   
+  #Create the ecosystem network representation
   output$Foodweb <- visNetwork::renderVisNetwork({
     req(data$Info, data$CaNSample)
     
     info <- data$Info
-    resolved <- data$Resolved_components
-    comp_param <- data$CaNSample$CaNmod$components_param
+    resolved <- data$Resolved_components #Resolved ecosystem components in the chosen variable
+    comp_param <- data$CaNSample$CaNmod$components_param #Components from CaNSample to use for the network
     
-    nodes <- info |>
+    #Create the nodes of the foodweb network
+    nodes <- info %>%
       mutate(
         id = ID,
-        is_resolved = ID %in% resolved,
-        label = if (isTRUE(input$show_node_labels)) ID else "",
-        shape = ifelse(grepl("^<img", Image), "image", "dot"),
-        image = ifelse(grepl("^<img", Image), sub('^<img src="([^"]+)".*', "\\1", Image), paste0("www/img/", ID, ".png")),
-        opacity = ifelse(is_resolved, 1, 0.2),
-        labelHighlightBold = is_resolved,
-        x = comp_param$X[match(ID, comp_param$Component)] * 1000,
-        y = comp_param$Y[match(ID, comp_param$Component)] * 1000,
+        is_resolved = ID %in% resolved, #Boolean if ecosystem component resolved
+        label = if (isTRUE(input$show_node_labels)) ID else "", #if "Show Node Labels" ticked, show labels
+        shape = ifelse(grepl("^<img", Image), "image", "dot"), #If image exists show image, else show a dot
+        image = ifelse(grepl("^<img", Image), sub('^<img src="([^"]+)".*', "\\1", Image), paste0("www/img/", ID, ".png")), #load image
+        opacity = ifelse(is_resolved, 1, 0.2), #If not resolved render the component more transparent
+        labelHighlightBold = is_resolved, #Highlight text when component is selected only when resolved
+        x = comp_param$X[match(ID, comp_param$Component)] * 1000, #position of the nodes
+        y = comp_param$Y[match(ID, comp_param$Component)] * 1000, #position of the nodes
         font.bold = 22
       )
     
-    flux_def <- data$CaNSample$CaNmod$fluxes_def
+    flux_def <- data$CaNSample$CaNmod$fluxes_def #fluxes represented in the model
+    
     edges <- tibble(
       id = paste0(flux_def$From, "_", flux_def$To),
-      label = if (isTRUE(input$show_edge_labels)) paste0(flux_def$From, "_", flux_def$To) else "",
+      label = if (isTRUE(input$show_edge_labels)) paste0(flux_def$From, "_", flux_def$To) else "", #if "Show Flux Labels" ticked, show labels
       from = flux_def$From,
       to = flux_def$To,
-      color = list(list(highlight = "black", hover = "black")),
-      selectionWidth = if (input$Typegraph == "Flux Series") 1 else 0,
-      hoverWidth = if (input$Typegraph == "Flux Series") 1 else 0,
-      arrowStrikethrough = FALSE
+      color = list(highlight=if_else(input$Typegraph == "Flux Series","black","grey")), #if "Flux series" picked highlight edges when selected
+      selectionWidth = if (input$Typegraph == "Flux Series") 1 else 0, #if "Flux series" picked highlight edges when selected
+      hoverWidth = if (input$Typegraph == "Flux Series") 1 else 0, #if "Flux series" picked highlight edges when selected
+      arrowStrikethrough = FALSE #Stop the arrorws at the point of the arrow
     )
     
+    #Create the network from the nodes and edges
     visNetwork::visNetwork(nodes, edges) |>
-      visNetwork::visEdges(arrows = list(to = TRUE)) |>
-      visNetwork::visInteraction(multiselect = TRUE, keyboard = TRUE) |>
+      visNetwork::visEdges(arrows = list(to = TRUE)) |> #Put arrows to show the direction of the fluxes
+      visNetwork::visInteraction(multiselect = TRUE, keyboard = TRUE) |>  #Allow the selection of multiple elements at once (clicking ctl or cmd) and allow to move the plot with the arrows of the keyboard
       visNetwork::visEvents(
+        #Save the selected nodes id into input$selectedNodes
         selectNode = htmlwidgets::JS("function(nodes) {
           var selectedNodes = this.getSelectedNodes();
           if (selectedNodes.length > 0) {
@@ -179,6 +196,7 @@ app_server <- function(input, output, session) {
             Shiny.setInputValue('selected_components', selectedNodes);
           }
         }"),
+        #Save the selected edges id into input$selectedEdges
         selectEdge = htmlwidgets::JS("function(edges) {
           var selectedEdges = this.getSelectedEdges();
           if (selectedEdges.length > 0 && this.getSelectedNodes().length === 0) {
@@ -186,6 +204,7 @@ app_server <- function(input, output, session) {
             Shiny.setInputValue('selected_components', selectedEdges);
           }
         }"),
+        #Save the positions of the nodes when moved into input$positions
         dragEnd = htmlwidgets::JS("function(params) {
           if (params.nodes.length > 0) {
             var positions = this.getPositions();
@@ -193,13 +212,13 @@ app_server <- function(input, output, session) {
           }
         }")
       ) |>
-      visNetwork::visPhysics(enable = FALSE) |>
-      visNetwork::visNodes(font = list(size = 20), shapeProperties = list(useImageSize = TRUE)) |>
-      visNetwork::visOptions(highlightNearest = FALSE, selectedBy = NULL)
+      visNetwork::visPhysics(enable = FALSE) |>   #Don't allow the entire network to move when moving a node
+      visNetwork::visNodes(font = list(size = 20), shapeProperties = list(useImageSize = TRUE)) #Use the image true size and increase the font of the labels
   })
-  
+  #Put the positions of the nodes into a reactive values to save them later
   Positions <- reactiveValues(x = NULL, y = NULL)
   
+  #Assign the initial positions to the ones from CaNSample
   observe({
     req(data$CaNSample)
     comp_param <- data$CaNSample$CaNmod$components_param
@@ -225,7 +244,7 @@ app_server <- function(input, output, session) {
     }
   })
   
-  # ---- Save CaNSample Data with Updated Positions ----
+  # Move to plot table when clicking on "Continue" with valid ecosystem components
   output$savedata <- downloadHandler(
     filename = "CaNSample.RData",
     content = function(file) {
@@ -236,7 +255,7 @@ app_server <- function(input, output, session) {
     }
   )
   
-  # ---- Plot Dispatcher ----
+  # Choice of variable to plot function 
   plot_dispatch <- list(
     "Biomass Series"             = BiomassSeries,
     "Consumption Series"         = ConsumptionSeries,
@@ -254,15 +273,7 @@ app_server <- function(input, output, session) {
     Info_table <- data$Info %>% select(-Image, -Upload)
     
     # Define resolved components
-    resolved_components <- data$Resolution %>%
-      filter(
-        (input$Typegraph == "Biomass Series"             & IsBiomass) |
-          (input$Typegraph == "Consumption Series"         & IsConsummer) |
-          (input$Typegraph == "Predation and Catch Series" & IsPredated) |
-          (input$Typegraph == "Ratio Consumption/Biomass"  & IsConsummer & IsBiomass) |
-          (input$Typegraph == "Ratio Production/Biomass"   & IsPredated & IsBiomass) |
-          (input$Typegraph == "Mortality Series"           & IsBiomass & IsPredated & IsConsummer)
-      ) %>% pull(Component)
+    resolved_components <- data$Resolved_components
     
     ecosystem_components <- intersect(input$selected_components, resolved_components)
     
@@ -287,7 +298,7 @@ app_server <- function(input, output, session) {
     )
   })
   
-  # ---- Render Plot ----
+  # Render Plot
   output$Plots <- renderPlot({
     plot_obj()
   }, height = reactive({
@@ -298,7 +309,7 @@ app_server <- function(input, output, session) {
     width * ceiling(num_plots / 3)
   }))
   
-  # ---- Render Info Table with Color Picker ----
+  # Render an editable Info Table 
   output$table_info <- DT::renderDT({
     DT::datatable(
       data$Info,
@@ -343,12 +354,12 @@ app_server <- function(input, output, session) {
     ")
   })
   
-  # ---- React to Color Picker Input ----
+  # React to Color Picker Input 
   observeEvent(input$color_change, {
     data$Info[input$color_change$row + 1, 3] <- input$color_change$color
   })
   
-  # ---- Handle Image Upload ----
+  # Handle Image Upload
   observeEvent(input$image_upload, {
     upload <- input$image_upload
     req(upload$content)
@@ -356,13 +367,13 @@ app_server <- function(input, output, session) {
     data$Info[row, "Image"] <- sprintf('<img src="%s" width="40px" />', upload$content)
   })
   
-  # ---- Editable Cell Change ----
+  #Editable Cell Change
   observeEvent(input$table_info_cell_edit, {
     info_edit <- input$table_info_cell_edit
     data$Info[info_edit$row, info_edit$col + 1] <- info_edit$value
   })
   
-  # ---- Download Cleaned Info Table ----
+  # Download Cleaned Info Table
   output$saveinfo <- downloadHandler(
     filename = paste0("Info_table_", format(Sys.time(), "%d-%m-%Y"), ".csv"),
     content = function(file) {
