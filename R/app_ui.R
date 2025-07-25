@@ -29,7 +29,7 @@ app_ui <- function(request) {
           width = 3,
           # Default width when visible
           wellPanel(
-            actionButton("help", "Press for instructions"),
+            actionButton("help", "Tutorial", class = "btn-blue"),
             checkboxInput("show_node_labels", "Show Node Labels", TRUE),
             checkboxInput("show_edge_labels", "Show Flux Labels", FALSE),
             introBox(
@@ -65,7 +65,7 @@ app_ui <- function(request) {
               width = NULL,
               placeholder = NULL
             ),introBox(
-            actionButton("continue", "Continue", class = "btn-continue"),
+            actionButton("continue", "Continue", class = "btn-blue"),
             data.step = 4,
             data.intro = "Click on this button once you have choosen a variable and ecosystem components."
             ),
@@ -104,7 +104,7 @@ app_ui <- function(request) {
               br(),
               introBox(
               fileInput("metadatafile", "Input a metadata file", accept = ".csv"),
-              data.step = 8,
+              data.step = 9,
               data.intro = "...that you will be able to reupload next time you use the app."
               ),
               br(),
