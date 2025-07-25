@@ -6,6 +6,7 @@
 #' @import dplyr
 #' @import tidyr
 #' @import coda
+#' @import rintrojs
 #' @noRd
 app_server <- function(input, output, session) {
   options(shiny.maxRequestSize = 1000 * 1024 ^ 2)
@@ -138,7 +139,7 @@ app_server <- function(input, output, session) {
                           sprintf('<img src="%s" width="60px" />', table$Image),
                           '<span style="color:gray;">No image</span>') #If not existing assign a basic style
     
-    #Allow an uploaded image
+    #Add an upload button for the metadata
     table$Upload <- sprintf(
       '<label class="custom-upload">Upload<input type="file" class="image-upload" data-id="%s" accept=".png,.jpg,.jpeg,.svg" style="display:none;" /></label>',
       table$ID
@@ -163,7 +164,7 @@ app_server <- function(input, output, session) {
         label = if (isTRUE(input$show_node_labels)) ID else "", #if "Show Node Labels" ticked, show labels
         shape = ifelse(grepl("^<img", Image), "image", "dot"), #If image exists show image, else show a dot
         image = ifelse(grepl("^<img", Image), sub('^<img src="([^"]+)".*', "\\1", Image), paste0("www/img/", ID, ".png")), #load image
-        opacity = ifelse(is_resolved, 1, 0.2), #If not resolved render the component more transparent
+        opacity = ifelse(is_resolved, 1, 0.6), #If not resolved render the component more transparent
         labelHighlightBold = is_resolved, #Highlight text when component is selected only when resolved
         x = comp_param$X[match(ID, comp_param$Component)] * 1000, #position of the nodes
         y = comp_param$Y[match(ID, comp_param$Component)] * 1000, #position of the nodes
@@ -313,7 +314,7 @@ app_server <- function(input, output, session) {
   output$table_info <- DT::renderDT({
     DT::datatable(
       data$Info,
-      editable = TRUE,
+      editable = list(target = "cell", disable = list(columns = c(0))),
       rownames = FALSE,
       selection = "none",
       escape = FALSE,
@@ -381,5 +382,15 @@ app_server <- function(input, output, session) {
         select(-Image, -Upload) %>%
         write.csv(file, row.names = FALSE)
     }
+  )
+  
+  #----TUTORIAL----
+  
+  observeEvent(input$help,
+               introjs(session, options = list("nextLabel"="Continue",
+                                               "prevLabel"="Back",
+                                               "skipLabel"="Skip the tutorial"),
+                       events = list("oncomplete"=I('alert("Enjoy your RCaN experience!")'),
+                                     "onbeforechange" = readCallback("switchTabs")))
   )
 }
