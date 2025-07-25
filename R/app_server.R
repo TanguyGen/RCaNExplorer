@@ -164,7 +164,7 @@ app_server <- function(input, output, session) {
         label = if (isTRUE(input$show_node_labels)) ID else "", #if "Show Node Labels" ticked, show labels
         shape = ifelse(grepl("^<img", Image), "image", "dot"), #If image exists show image, else show a dot
         image = ifelse(grepl("^<img", Image), sub('^<img src="([^"]+)".*', "\\1", Image), paste0("www/img/", ID, ".png")), #load image
-        opacity = ifelse(is_resolved, 1, 0.6), #If not resolved render the component more transparent
+        opacity = ifelse(is_resolved, 1, 0.5), #If not resolved render the component more transparent
         labelHighlightBold = is_resolved, #Highlight text when component is selected only when resolved
         x = comp_param$X[match(ID, comp_param$Component)] * 1000, #position of the nodes
         y = comp_param$Y[match(ID, comp_param$Component)] * 1000, #position of the nodes
