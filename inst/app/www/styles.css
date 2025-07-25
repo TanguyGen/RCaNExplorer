@@ -45,20 +45,6 @@ div.row {
   box-shadow: none;
 }
 
-#helpbutton {
-  width: 50px;            /* or larger if needed */
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  float: right;           /* keeps it on the right side, you can adjust this if needed */
-  font-size: 50px;        /* icon size */
-  padding: 0;
-  border-radius: 50%;
-  margin-top: 10px;
-  margin-right: 150px;     /* Move the button slightly to the left by reducing this value */
-  margin-bottom: 0px;    /* Reduce the margin at the bottom */
-}
 
 #dropdownMenu {
   position: absolute;
