@@ -12,7 +12,9 @@ app_server <- function(input, output, session) {
   
   data <- reactiveValues(CaNSample = NULL,
                          CaNSample_long = NULL,
-                         Info = NULL) #Create a reactive value that will contain the data
+                         Info = NULL,
+                         Resolution=NULL,
+                         Resolved_components=NULL) #Create a reactive value that will contain the data
   
   observe({
     if (!is.null(input$rcanfile) &&
@@ -23,6 +25,8 @@ app_server <- function(input, output, session) {
       data$CaNSample <- NULL
       data$CaNSample_long <- NULL
       data$Info <- NULL
+      data$Resolution <- NULL
+      data$Resolved_components=NULL
       e <- new.env()  #Create a new environment
       load(input$rcanfile$datapath, envir = e)       #Load the file in the new environment
       loaded_objs <- ls(envir = e) # Get all the variables from the environment
@@ -81,6 +85,41 @@ app_server <- function(input, output, session) {
       mutate(FluxTrophic = Trophic == 1)%>%
       select(Sample_id,Var,Year,value,FluxTrophic)
   }
+  
+  observe({
+    req(data$CaNSample)
+    req(data$CaNSample_long)
+    list_element <- data$CaNSample$CaNmod$components_param$Component
+    Fluxes_def<-data$CaNSample[["CaNmod"]][["fluxes_def"]]
+    
+    Resolution_component<-data.frame(Component=list_element)%>%
+      mutate(
+        IsBiomass=if_else(Component %in% data$CaNSample_long$Var, TRUE, FALSE),
+        IsConsummer=if_else(Component %in% Fluxes_def$To, TRUE, FALSE),
+        IsPredated=if_else(Component %in% Fluxes_def$From, TRUE, FALSE),
+      )
+    
+    data$Resolution<-Resolution_component
+  })
+  
+  observe(
+    {
+      req(data$Resolution)
+      req(input$Typegraph)
+      data$Resolved_components <- data$Resolution %>%
+        filter(
+          (input$Typegraph == "Biomass Series" & IsBiomass) |
+            (input$Typegraph == "Consumption Series" & IsConsummer) |
+            (input$Typegraph == "Predation and Catch Series" & IsPredated) |
+            (input$Typegraph == "Ratio Consumption/Biomass" & IsConsummer & IsBiomass) |
+            (input$Typegraph == "Ratio Production/Biomass" & IsPredated & IsBiomass) |
+            (input$Typegraph == "Mortality Series" & IsBiomass & IsPredated & IsConsummer) |
+            (input$Typegraph == "Flux Series") # allow all for fluxes
+        ) %>%
+        pull(Component)
+      
+    }
+  )
   
   observe({
     if (!is.null(input$metadatafile) &&
@@ -155,7 +194,6 @@ app_server <- function(input, output, session) {
     data$Info <- Info_table
   })
   
-
   
   #Render the interactive foodweb
   output$Foodweb <- visNetwork::renderVisNetwork({
@@ -167,10 +205,15 @@ app_server <- function(input, output, session) {
     img_dir <- system.file("app/www/img", package = "RCaNExplorer")
     existing_images <- list.files(img_dir)
 
+
+    resolved_components<-data$Resolved_components
+   
+
     #Create the nodes of the foodweb network
     nodes <- Info_table%>% 
       mutate(
         id = ID,
+        is_resolved = ID %in% resolved_components,
         #Give them an ID
         label = case_when(#Show their ID as label only when the user chose to show the labels
           input$show_node_labels ~ id, TRUE ~ ""),
@@ -185,7 +228,8 @@ app_server <- function(input, output, session) {
           sub("^<img src=\"([^\"]+)\".*$", "\\1", Info_table$Image),
           paste0("www/img/", id,".png")
         ),
-        #Images are in inst/app/www in the format <ID>.png
+        opacity = ifelse(is_resolved, 1, 0.2),
+        labelHighlightBold = ifelse(is_resolved, TRUE,FALSE),
         x = data$CaNSample$CaNmod$components_param$X * 1000,
         #Get the x and y in a bigger scale to have more space between nodes
         y = data$CaNSample$CaNmod$components_param$Y * 1000,
@@ -204,13 +248,18 @@ app_server <- function(input, output, session) {
                           TRUE ~ ""),
         from = data$CaNSample$CaNmod$fluxes_def$From,
         to = data$CaNSample$CaNmod$fluxes_def$To,
-        color = "grey"
+        color = list(list(highlight=if_else(input$Typegraph == "Flux Series","black","grey"),
+                          hover=if_else(input$Typegraph == "Flux Series","black","grey"))
+                     ),
+        selectionWidth = if_else(input$Typegraph == "Flux Series",1,0),
+        hoverWidth = if_else(input$Typegraph == "Flux Series",1,0),
+        arrowStrikethrough=FALSE
       )
     
     #Create the network from the nodes and edges
     visNetwork::visNetwork(nodes, edges) %>%
       visNetwork::visEdges(arrows = list(to = TRUE)) %>% #Put arrows to show the direction of the fluxes
-      visNetwork::visInteraction(multiselect = TRUE) %>% #Allow the selection of multiple elements at once (clicking ctl or cmd)
+      visNetwork::visInteraction(multiselect = TRUE,keyboard = TRUE) %>% #Allow the selection of multiple elements at once (clicking ctl or cmd)
       visNetwork::visEvents(
         #Save the selected nodes id into input$selectedNodes
         selectNode = "function(nodes) {
@@ -240,7 +289,11 @@ app_server <- function(input, output, session) {
       ) %>%
       visNetwork::visPhysics(enable = FALSE) %>%  #Don't allow the entire network to move when moving a node
       visNetwork::visNodes(font = list(size = 20),
-                           shapeProperties = list(useImageSize = TRUE)) #Use the image sizes and increase the font of the labels
+                           shapeProperties = list(useImageSize = TRUE))%>% #Use the image sizes and increase the font of the labels
+      visNetwork::visOptions(
+        highlightNearest = list(enabled = FALSE, degree = 0, hover = FALSE),
+        selectedBy = NULL
+      )
   })
   
   #Put the positions of the nodes into a reactive values to save them later
@@ -259,45 +312,17 @@ app_server <- function(input, output, session) {
   })
   
   
-  #Depending if we select a node, an edge or nothing give graph options
-  observeEvent(input$selected_type, {
-    if (input$selected_type == "node") {
-      updateSelectInput(
-        session,
-        "Typegraph",
-        choices = c(
-          "Select an option...",
-          "Biomass Series",
-          "Consumption Series",
-          "Predation and Catch Series",
-          "Ratio Consumption/Biomass",
-          "Ratio Production/Biomass",
-          "Mortality"
-        ),
-        selected = "Select an option..."
-      )
-    } else if (input$selected_type == "edge") {
-      updateSelectInput(
-        session,
-        "Typegraph",
-        choices = c("Select an option...", "Flux Series"),
-        selected = "Select an option..."
-      )
-    } else {
-      updateSelectInput(
-        session,
-        "Typegraph",
-        choices = c("Select an option..."),
-        selected = "Select an option..."
-      )
-    }
-  })
-  
   observeEvent(input$continue, {
     req(input$Typegraph, input$selected_components)
-    updateTabsetPanel(session, "menu", selected = "Plots")
+    
+    valid_selected <- intersect(input$selected_components, data$Resolved_components)
+    
+    if (length(valid_selected) > 0) {
+      updateTabsetPanel(session, "menu", selected = "Plots")
+    } else {
+      showNotification("Please select at least one valid ecosystem component.", type = "error")
+    }
   })
-  
   #Download the current CaNSample file with new positions
   output$savedata <- downloadHandler(
     filename = "CaNSample.RData",
@@ -317,10 +342,24 @@ app_server <- function(input, output, session) {
     Info_table <- data$Info%>%
       select(-Image,-Upload)
     
-    ecosystem_components <- input$selected_components
+    req(data$Resolution)
     
+    #Filter the non-resolved components
+    resolved_components <- data$Resolution %>%
+      filter(
+        (input$Typegraph == "Biomass Series" & IsBiomass) |
+          (input$Typegraph == "Consumption Series" & IsConsummer) |
+          (input$Typegraph == "Predation and Catch Series" & IsPredated) |
+          (input$Typegraph == "Ratio Consumption/Biomass" & IsConsummer & IsBiomass) |
+          (input$Typegraph == "Ratio Production/Biomass" & IsPredated & IsBiomass) |
+          (input$Typegraph == "Mortality Series" & IsBiomass & IsPredated & IsConsummer)
+      ) %>%
+      pull(Component)
+
+    ecosystem_components <- intersect(input$selected_components, resolved_components)
+
     #Plot Series of biomass
-    if (input$Typegraph == "Biomass Series") {
+    if (input$Typegraph == "Biomass Series"&length(ecosystem_components)>0) {
       #Call the function to create Biomass plots
       BiomassSeries(
         data$CaNSample_long,
@@ -331,7 +370,7 @@ app_server <- function(input, output, session) {
         session = session
       )
       
-    } else if (input$Typegraph == "Consumption Series") {
+    } else if (input$Typegraph == "Consumption Series"&length(ecosystem_components)>0) {
       #Call the function to create Consumptions plots
       ConsumptionSeries(
         data$CaNSample_long,
@@ -342,7 +381,7 @@ app_server <- function(input, output, session) {
         session = session
       )
       
-    } else if (input$Typegraph == "Predation and Catch Series") {
+    } else if (input$Typegraph == "Predation and Catch Series"&length(ecosystem_components)>0) {
       #Call the function to create Predation plots
       PredationSeries(
         data$CaNSample_long,
@@ -353,7 +392,7 @@ app_server <- function(input, output, session) {
         session = session
       )
       
-    } else if (input$Typegraph == "Flux Series") {
+    } else if (input$Typegraph == "Flux Series"&length(ecosystem_components)>0) {
       #Call the function to create fluxes plots
       FluxSerie(
         data$CaNSample_long,
@@ -364,7 +403,7 @@ app_server <- function(input, output, session) {
         session = session
       )
       
-    } else if (input$Typegraph == "Ratio Consumption/Biomass") {
+    } else if (input$Typegraph == "Ratio Consumption/Biomass"&length(ecosystem_components)>0) {
       #Call the function to create Ratio Consumption/Biomass plots
       RatioConsumptionBiomass(
         data$CaNSample_long,
@@ -375,7 +414,7 @@ app_server <- function(input, output, session) {
         session = session
       )
       
-    } else if (input$Typegraph == "Ratio Production/Biomass") {
+    } else if (input$Typegraph == "Ratio Production/Biomass"&length(ecosystem_components)>0) {
       #Call the function to create Ratio Production/Biomass plots
       RatioProductionBiomass(
         data$CaNSample_long,
@@ -385,7 +424,7 @@ app_server <- function(input, output, session) {
         grouplabel = input$groupname,
         session = session
       )
-    }else if (input$Typegraph == "Mortality") {
+    }else if (input$Typegraph ==  "Mortality Series"&length(ecosystem_components)>0) {
       #Call the function to create Ratio Production/Biomass plots
       MortalitySeries(
         data$CaNSample_long,

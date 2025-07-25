@@ -38,7 +38,14 @@ app_ui <- function(request) {
             selectInput(
               "Typegraph",
               "Choose a visualization",
-              c("Select an option...")
+              c("Select an option...",
+                "Biomass Series",
+                "Consumption Series",
+                "Predation and Catch Series",
+                "Ratio Consumption/Biomass",
+                "Ratio Production/Biomass",
+                "Mortality Series",
+                "Flux Series")
             ),
             checkboxInput("groupspecies", "Sum the Biomasses/Flux?", FALSE),
             textInput(
