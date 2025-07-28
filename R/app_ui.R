@@ -19,7 +19,7 @@ app_ui <- function(request) {
         div(class = "header",
             checked = NA,
             h1(),
-            h2("RCaN Explorer"))
+            h2( img(src = "www/logo_rcan.png", height = "100px", style = "margin-right:10px;"),"RCaN Explorer"))
       }),
       
       sidebarLayout(
@@ -140,11 +140,12 @@ app_ui <- function(request) {
 #' resources inside the Shiny application.
 #'
 #' @import shiny
-#' @importFrom golem add_resource_path activate_js favicon bundle_resources
+#' @importFrom golem add_resource_path activate_js bundle_resources
 #' @noRd
 golem_add_external_resources <- function() {
   add_resource_path("www", app_sys("app/www"))
-  favicon()
-  tags$head(bundle_resources(path = app_sys("app/www"), app_title = "RCaNvisualtool")
+  tags$head(bundle_resources(
+    path = app_sys("app/www"), 
+    app_title = "RCaNvisualtool")
   )
 }
