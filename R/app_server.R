@@ -168,7 +168,8 @@ app_server <- function(input, output, session) {
         labelHighlightBold = is_resolved, #Highlight text when component is selected only when resolved
         x = comp_param$X[match(ID, comp_param$Component)] * 1000, #position of the nodes
         y = comp_param$Y[match(ID, comp_param$Component)] * 1000, #position of the nodes
-        font.bold = 22
+        font.bold = 24,
+        font.size=20
       )
     
     flux_def <- data$CaNSample$CaNmod$fluxes_def #fluxes represented in the model
@@ -214,7 +215,10 @@ app_server <- function(input, output, session) {
         }")
       ) |>
       visNetwork::visPhysics(enable = FALSE) |>   #Don't allow the entire network to move when moving a node
-      visNetwork::visNodes(font = list(size = 20), shapeProperties = list(useImageSize = TRUE)) #Use the image true size and increase the font of the labels
+      visNetwork::visNodes(
+        shapeProperties = list(useImageSize = FALSE),  # <-- This is key
+        size = 15
+      ) #Use the image true size and increase the font of the labels
   })
   #Put the positions of the nodes into a reactive values to save them later
   Positions <- reactiveValues(x = NULL, y = NULL)
