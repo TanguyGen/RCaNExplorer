@@ -14,8 +14,8 @@ app_ui <- function(request) {
         bootswatch = "minty",
         bg = "#FDFFFF",
         fg = "#00171F",
-        primary = "#006494",
-        secondary = "#45BAC4",
+        primary = "#005086",
+        secondary = "#08a4a4",
         success = "#629460",
         base_font = bslib::font_google("Inter")
       ),
@@ -24,10 +24,16 @@ app_ui <- function(request) {
         includeCSS(app_sys("www/styles.css"))
       ),
       withTags({
-        div(class = "header",
-            checked = NA,
-            h1(),
-            h2( img(src = "www/logo_rcan.png", height = "100px", style = "margin-right:10px;"),"RCaN Explorer"))
+        div(class = "header-bar",
+            div(class = "header-left",
+                img(src = "www/rcan_logo.png", class = "logo")
+            ),
+            div(class = "header-center",
+                span("RCaN Explorer", class = "app-title")
+            ),
+            div(class = "header-right",
+                img(src = "www/inrae_logo.png", class = "logo")) # empty div to balance flex space
+        )
       }),
       sidebarLayout(
         # Sidebar Panel (Collapsible)
