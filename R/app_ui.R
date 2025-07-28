@@ -15,7 +15,7 @@ app_ui <- function(request) {
         bg = "#FDFFFF",
         fg = "#00171F",
         primary = "#006494",
-        secondary = "#3AAFB9",
+        secondary = "#45BAC4",
         success = "#629460",
         base_font = bslib::font_google("Inter")
       ),
