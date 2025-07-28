@@ -10,10 +10,18 @@ app_ui <- function(request) {
   tagList(
     golem_add_external_resources(),
     fluidPage(
+      theme=bslib::bs_theme(
+        bootswatch = "minty",
+        bg = "#FDFFFF",
+        fg = "#00171F",
+        primary = "#006494",
+        secondary = "#3AAFB9",
+        success = "#629460",
+        base_font = bslib::font_google("Inter")
+      ),
       introjsUI(),
       tags$head(
-        includeCSS(app_sys("www/styles.css")),
-        tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap"),
+        includeCSS(app_sys("www/styles.css"))
       ),
       withTags({
         div(class = "header",
@@ -21,7 +29,6 @@ app_ui <- function(request) {
             h1(),
             h2( img(src = "www/logo_rcan.png", height = "100px", style = "margin-right:10px;"),"RCaN Explorer"))
       }),
-      
       sidebarLayout(
         # Sidebar Panel (Collapsible)
         sidebarPanel(
@@ -30,6 +37,8 @@ app_ui <- function(request) {
           # Default width when visible
           wellPanel(
             actionButton("help", "Tutorial", class = "btn-blue"),
+            br(),
+            br(),
             checkboxInput("show_node_labels", "Show Node Labels", TRUE),
             checkboxInput("show_edge_labels", "Show Flux Labels", FALSE),
             introBox(
@@ -79,8 +88,10 @@ app_ui <- function(request) {
           # Takes the rest of the space
           tabsetPanel(
             id = "menu",
+            type="tabs",
             tabPanel(
               "Network",
+              class="network",
               introBox(
               visNetwork::visNetworkOutput("Foodweb", height = "80vh")%>% 
               shinycssloaders::withSpinner(type = 6),
@@ -107,7 +118,6 @@ app_ui <- function(request) {
               data.step = 9,
               data.intro = "...that you will be able to reupload next time you use the app."
               ),
-              br(),
               introBox(
               DT::DTOutput("table_info"),
               data.step = 7,
@@ -116,6 +126,7 @@ app_ui <- function(request) {
               The Color is the colour used in the plotting of the ecosystem components and of the nodes of the ecosystem network when no image is given. To edit it, click on the palette and change the colour. 
               Lastly, to change the image used to represent the ecosystem component in the foodweb, click on the corresponding Upload button and add an image in format png, jpg, jpeg or svg. The new image should appear in the Image column."
               ),
+              br(),
               br(),
               introBox(
               downloadButton("saveinfo", "Download new graphical metadata"),

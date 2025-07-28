@@ -1,3 +1,7 @@
+body {
+  margin-bottom: 60px;  /* add exta space at the bottom */
+}
+
 .header h2 {
   font-size: 60px;
   color: #006494 !important; 
@@ -6,29 +10,36 @@
   text-align: center;
 }
 
-h3{
-  text-align: center;
-}
 div.row {
   position: relative;
-  top: 30px;
+  top: 15px;
 }
 
-.well { background-color: white !important; border: 1px solid #ddd; }
-    .sidebar { background-color: white !important; }
-
- #main_panel {
-      overflow-y: auto;  /* Enable vertical scrolling */
-      max-height: 90vh;  /* Prevent overflow beyond viewport height */
-    }
 
 .nav-tabs > li > a {
       font-size: 20px !important;  /* Increase font size */
       padding: 15px 20px !important; /* Increase padding */
+      border: 1px solid #ddd;          /* Light gray border */
+      border-radius: 8px 12px 0 0;     /* Slightly rounded top corners */
+      margin-right: 4px;               /* Small gap between tabs */
+      background-color: #3AAFB9;      /* Light background for tabs */
+      color: white !important;
     }
-    .nav-tabs {
-      border-bottom: 3px solid #000 !important; /* Thicker underline */
-    }
+    
+.nav-tabs {
+  border-bottom: none !important; /* Remove default bottom border */
+
+}
+    
+.nav-tabs > li > a.active,
+.nav-tabs > li > a.active:focus,
+.nav-tabs > li > a.active:hover { 
+  background-color: #006494 !important; /* Change colour of active tab */
+  border: none !important;
+  border-radius: 8px 8px 0 0 !important; /* Slightly rounded top corners */
+}
+
+
 .well {
   border: 1px solid #dcdcdc;
   border-radius: 6px;
@@ -40,39 +51,19 @@ div.row {
 }
 
 #sidebar {
-  border: none;
+  border:  2px solid #dcdcdc;;
   background: none;
-  box-shadow: none;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
 }
 
-
-#dropdownMenu {
-  position: absolute;
-  left: -120px;     
-  top: 0;         
-  z-index: 999;   
+.network {
+  border: 0.5px solid rgba(0, 0, 0, 0.1); /* Customize color and thickness */
+  border-radius: 8px;
+  padding: 10px;
+  background-color: #fff;
 }
-
 
 .btn-blue {
   background-color: #006494 !important;
   color: white;
-}
-
-.custom-upload {
-  background-color: #686D76;
-  color: white;
-  padding: 10px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  display: inline-block;
-}
-
-.custom-upload:hover {
-  background-color: #373A40;
-}
-
-.custom-upload input[type="file"] {
-  display: none;
 }
