@@ -41,6 +41,11 @@ app_server <- function(input, output, session) {
   
   #Function to load CaNSample object
   load_CaNSample <- function(path_or_url) {
+    data$CaNSample = NULL
+    data$CaNSample_long = NULL
+    data$Info = NULL
+    data$Resolution = NULL
+    data$Resolved_components = NULL
     e <- new.env()
     load(path_or_url, envir = e)
     objs <- ls(envir = e)
@@ -54,7 +59,6 @@ app_server <- function(input, output, session) {
   
   observe({
     obj <- NULL
-    
     if (!is.null(input$rcanfile) && length(input$rcanfile$datapath) > 0) {
       obj <- load_CaNSample(input$rcanfile$datapath)
     } else if (is.null(data$CaNSample)) {
@@ -68,8 +72,13 @@ app_server <- function(input, output, session) {
     
     #Assign to the reactive data "data" to store it
     if (!is.null(obj)) { 
-      data$CaNSample <- obj
-      data$CaNSample_long <- transform_CaNSample(obj)
+      if(is.CaNSample(obj)){ #Check that it is a CaNSample object
+        data$CaNSample <- obj
+        data$CaNSample_long <- transform_CaNSample(obj)
+      }else{
+        showNotification("The uploaded object does not follow the structure of a CaNSample object.")
+      }
+      
     }
   })
   
@@ -165,11 +174,13 @@ app_server <- function(input, output, session) {
   
   #Create the ecosystem network representation
   output$Foodweb <- visNetwork::renderVisNetwork({
-    req(data$Info, data$CaNSample)
+    req(data$Info, data$CaNSample, Positions$x,Positions$y)
     
     info <- data$Info
     resolved <- data$Resolved_components #Resolved ecosystem components in the chosen variable
     comp_param <- data$CaNSample$CaNmod$components_param #Components from CaNSample to use for the network
+    
+    
     
     #Create the nodes of the foodweb network
     nodes <- info %>%
@@ -181,8 +192,9 @@ app_server <- function(input, output, session) {
         image = ifelse(grepl("^<img", Image), sub('^<img src="([^"]+)".*', "\\1", Image), paste0("www/img/", ID, ".png")), #load image
         opacity = ifelse(is_resolved, 1, 0.5), #If not resolved render the component more transparent
         labelHighlightBold = is_resolved, #Highlight text when component is selected only when resolved
-        x = comp_param$X[match(ID, comp_param$Component)] * 1000, #position of the nodes
-        y = comp_param$Y[match(ID, comp_param$Component)] * 1000, #position of the nodes
+        color=Color,
+        x = Positions$x[match(ID, comp_param$Component)] * 1000,
+        y = Positions$y[match(ID, comp_param$Component)] * 1000, #position of the nodes, random when not specified
         font.bold = 24,
         font.size=20
       )
@@ -242,8 +254,16 @@ app_server <- function(input, output, session) {
   observe({
     req(data$CaNSample)
     comp_param <- data$CaNSample$CaNmod$components_param
-    Positions$x <- comp_param$X
-    Positions$y <- comp_param$Y
+    
+    # Ensure X and Y exist
+    if (!"X" %in% colnames(comp_param)) comp_param$X <- NA
+    if (!"Y" %in% colnames(comp_param)) comp_param$Y <- NA
+    
+    n <- nrow(comp_param)
+    
+    # Assign with default values if NA (e.g., random within range)
+    Positions$x <- ifelse(is.na(comp_param$X), runif(n, 0, 1), comp_param$X)
+    Positions$y <- ifelse(is.na(comp_param$Y), runif(n, 0, 1), comp_param$Y)
   })
   #If we move a node, assign the new node position to the reactive value
   observeEvent(input$node_positions, {
@@ -256,11 +276,16 @@ app_server <- function(input, output, session) {
   observeEvent(input$continue, {
     req(input$Typegraph, input$selected_components)
     
+    if(input$Typegraph=="Flux Series"){
+      data$Resolved_components<-data$CaNSample$CaNmod$fluxes_def$Flux
+    }
     valid_selected <- intersect(input$selected_components, data$Resolved_components)
+    
+    
     if (length(valid_selected) > 0) {
       updateTabsetPanel(session, "menu", selected = "Plots")
     } else {
-      showNotification("Please select at least one valid ecosystem component.", type = "error")
+      showNotification("Select at least one valid ecosystem component.", type = "error")
     }
   })
   
@@ -296,6 +321,7 @@ app_server <- function(input, output, session) {
     resolved_components <- data$Resolved_components
     
     ecosystem_components <- intersect(input$selected_components, resolved_components)
+    
     
     # Handle empty selections
     validate(

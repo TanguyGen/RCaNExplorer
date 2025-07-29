@@ -72,7 +72,7 @@ app_ui <- function(request) {
             ),
             data.step = 2,
             data.intro = "Select here the variable you want to visualise."),
-            checkboxInput("groupspecies", "Sum the Biomasses/Flux?", FALSE),
+            checkboxInput("groupspecies", "Group the ecosystem components", FALSE),
             textInput(
               "groupname",
               "Name your group",
