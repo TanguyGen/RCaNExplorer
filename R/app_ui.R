@@ -26,13 +26,13 @@ app_ui <- function(request) {
       withTags({
         div(class = "header-bar",
             div(class = "header-left",
-                img(src = "www/rcan_logo.png", class = "logo")
+                img(src = "www/rcan_logo.png", class = "logo_rcan")
             ),
             div(class = "header-center",
                 span("RCaN Explorer", class = "app-title")
             ),
             div(class = "header-right",
-                img(src = "www/inrae_logo.png", class = "logo")) # empty div to balance flex space
+                img(src = "www/inrae_logo.png", class = "logo_inrae")) # empty div to balance flex space
         )
       }),
       sidebarLayout(

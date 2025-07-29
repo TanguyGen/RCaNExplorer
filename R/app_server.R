@@ -76,15 +76,31 @@ app_server <- function(input, output, session) {
   #Check wich ecosystem components are resolved in terms of biomass, production and consumption
   observe({
     req(data$CaNSample, data$CaNSample_long)
+    
     comp <- data$CaNSample$CaNmod$components_param$Component
     flux <- data$CaNSample$CaNmod$fluxes_def
     
-    data$Resolution <- tibble(Component = comp) |>
+    # Create a lookup of outgoing fluxes per component
+    flux_grouped <- flux %>%
+      group_by(From) %>%
+      summarise(
+        n = n(),
+        AllToStartWithF = all(substr(To, 1, 1) == "F"),
+        NoneToStartWithF = all(substr(To, 1, 1) != "F"),
+        .groups = "drop"
+      )
+    
+    # Join with full component list
+    data$Resolution <- tibble(Component = comp) %>%
+      left_join(flux_grouped, by = c("Component" = "From")) %>%
       mutate(
         IsBiomass = Component %in% data$CaNSample_long$Var,
-        IsConsummer = Component %in% flux$To,
-        IsPredated = Component %in% flux$From
-      )
+        IsConsumer = Component %in% flux$To,
+        IsPredatedCatched = Component %in% flux$From,
+        IsCatchedOnly = !is.na(AllToStartWithF) & AllToStartWithF,
+        IsPredatedOnly = !is.na(NoneToStartWithF) & NoneToStartWithF
+      ) %>%
+      select(Component, IsBiomass, IsConsumer, IsPredatedCatched, IsCatchedOnly, IsPredatedOnly)
   })
   
   #Filter the components which are resolved for the chosen representation
@@ -95,12 +111,11 @@ app_server <- function(input, output, session) {
     data$Resolved_components <- data$Resolution |>
       filter(
         (type == "Biomass Series" & IsBiomass) |
-          (type == "Consumption Series" & IsConsummer) |
-          (type == "Predation and Catch Series" & IsPredated) |
-          (type == "Ratio Consumption/Biomass" & IsConsummer & IsBiomass) |
-          (type == "Ratio Production/Biomass" & IsPredated & IsBiomass) |
-          (type == "Mortality Series" & IsBiomass & IsPredated & IsConsummer) |
-          (type == "Flux Series")
+          (type == "Consumption Series" & IsConsumer) |
+          (type == "Predation and Catch Series" & IsPredatedCatched) |
+          (type == "Ratio Consumption/Biomass" & IsConsumer & IsBiomass) |
+          (type == "Ratio Production/Biomass" & IsPredatedCatched & IsBiomass) |
+          (type == "Mortality Series" & IsBiomass & IsPredatedCatched & IsConsumer & !IsCatchedOnly & !IsPredatedOnly) 
       ) |>
       pull(Component)
   })
@@ -273,7 +288,7 @@ app_server <- function(input, output, session) {
   
   # ---- Reactive Plot Generator ----
   plot_obj <- reactive({
-    req(input$Typegraph, input$selected_components, data$Resolution)
+    req(input$Typegraph,  data$Resolution)
     
     Info_table <- data$Info %>% select(-Image, -Upload)
     
@@ -284,7 +299,7 @@ app_server <- function(input, output, session) {
     
     # Handle empty selections
     validate(
-      need(length(ecosystem_components) > 0, "No valid components selected.")
+      need(length(ecosystem_components) > 0, "No valid ecosystem components selected.")
     )
     
     # Call appropriate plot function
@@ -311,6 +326,7 @@ app_server <- function(input, output, session) {
     num_plots <- if (input$groupspecies) 1 else length(input$selected_components)
     if (is.null(width) || num_plots == 0) return(400)
     if (num_plots == 1) return(800)
+    if(input$Typegraph=="Mortality Series") return(width * ceiling(num_plots / 1.5))
     width * ceiling(num_plots / 3)
   }))
   
