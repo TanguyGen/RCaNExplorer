@@ -5,7 +5,7 @@
 #'
 #' @param Data RCaNSample_long data-frame calculated from the RData RCaNSample.
 #' @param param A vector of strings specifying the fluxes.
-#' @param info A data frame containing additional information for the species, including their names and colors.
+#' @param info A data frame containing additional information for the species, including their names and colours.
 #' @param plot_series Logical; whether or not to plot the individual series. Default is TRUE.
 #' @param grouplabel A string used to label the fluxes (e.g., a custom label for the flux).
 #' @param ylab A string specifying the label for the y-axis of the plot. Default is "Flux (1000t)".
@@ -52,18 +52,18 @@ FluxSerie <- function(Data,
   
   
   # Drop unused columns before next merge
-  Flux_data[, c("FullName", "Color") := NULL]
+  Flux_data[, c("FullName", "Colour") := NULL]
   
   # Join species info for Predator
   Flux_data <- merge(Flux_data, info, by = "ID", all.x = TRUE)
   # Final assignments
   Flux_data[, `:=`(Predator = ID,
                        PredatorName = FullName)]
-  Flux_data[, c("FullName", "Color") := NULL]
+  Flux_data[, c("FullName", "Colour") := NULL]
   
   Flux_data[, `:=`(series = stringr::str_wrap(paste0("From ", PreyName, " to ", PredatorName), width = 30))]
   
-  colors_vector <- c(
+  colours_vector <- c(
     "#5050ff", "#ce3d32", "#749b58", "#f0e685", "#466983", "#ba6338", "#5db1dd",
     "#802268", "#6bd76b", "#d595a7", "#924822", "#837b8d", "#c75127", "#d58f5c",
     "#7a65a5", "#e4af69", "#3b1b53", "#cddeb7", "#612a79", "#ae1f63", "#e7c76f",
@@ -74,25 +74,25 @@ FluxSerie <- function(Data,
     "#00d68f", "#14ffb1"
   )
   
-  # Assign colors to series (loop through colors_vector if more fluxes than colors)
+  # Assign colours to series (loop through colours_vector if more fluxes than colours)
   unique_series <- unique(Flux_data$series)
   n_fluxes <- length(unique_series)
-  assigned_colors <- colors_vector[ (seq_len(n_fluxes) - 1) %% length(colors_vector) + 1 ]
+  assigned_colours <- colours_vector[ (seq_len(n_fluxes) - 1) %% length(colours_vector) + 1 ]
   
-  color_map <- data.table(series = unique_series, Color = assigned_colors)
+  colour_map <- data.table(series = unique_series, Colour = assigned_colours)
   
-  # Merge assigned colors back into Flux_data
-  Flux_data <- merge(Flux_data, color_map, by = "series", all.x = TRUE)
+  # Merge assigned colours back into Flux_data
+  Flux_data <- merge(Flux_data, colour_map, by = "series", all.x = TRUE)
   
   
   if (group == TRUE & length(param)>1) {
-    Series_prop <- Flux_data[, .(value = mean(value)), by = .(Year, series, Color)]
+    Series_prop <- Flux_data[, .(value = mean(value)), by = .(Year, series, Colour)]
     setnames(Series_prop, "series", "target")
-    setnames(Series_prop, "Color", "Color_target")
+    setnames(Series_prop, "Colour", "Colour_target")
     
     Flux_data <- Flux_data[, .(value = sum(value)), by = .(Year, Sample_id)]
     Flux_data[, `:=`(series=grouplabel,
-                         Color="#27548A"
+                         Colour="#27548A"
     )]
   }
   
@@ -103,7 +103,7 @@ FluxSerie <- function(Data,
   
   # Calculate quantiles for the flux time series (0%, 2.5%, 25%, 50%, 75%, 97.5%, 100%)
   quantiles <- Flux_data %>%
-    group_by(Year, series, Color) %>%
+    group_by(Year, series, Colour) %>%
     summarise(quantiles = list(stats::quantile(value, c(
       0, 0.025, 0.25, 0.5, 0.75, 0.975, 1
     ))), .groups = "drop") %>%

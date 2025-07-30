@@ -129,7 +129,7 @@ app_ui <- function(request) {
               data.step = 7,
               data.intro = "Here you can edit the graphical features of the app and plots. 
               The variable FullName gives the name of the ecosystem component whcih will be used for the plotting. To edit it double-click on it and make your changes. 
-              The Color is the colour used in the plotting of the ecosystem components and of the nodes of the ecosystem network when no image is given. To edit it, click on the palette and change the colour. 
+              The Colour is the colour used in the plotting of the ecosystem components and of the nodes of the ecosystem network when no image is given. To edit it, click on the palette and change the colour. 
               Lastly, to change the image used to represent the ecosystem component in the foodweb, click on the corresponding Upload button and add an image in format png, jpg, jpeg or svg. The new image should appear in the Image column."
               ),
               br(),

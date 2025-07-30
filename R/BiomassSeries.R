@@ -5,7 +5,7 @@
 #'
 #' @param Data RCaNSample_long data-frame computed from the RData RCaNSample
 #' @param param A character vector containing the species for which the biomass and consumption ratios will be calculated.
-#' @param info A data frame containing additional species information (e.g., FullName, Color, Biomass).
+#' @param info A data frame containing additional species information (e.g., FullName, Colour, Biomass).
 #' @param plot_series Logical; if TRUE, plots for each series will be created. Default is TRUE.
 #' @param group Logical; if TRUE, data will be grouped and summarized by year and sample ID. Default is FALSE.
 #' @param grouplabel A string to be used as the label for the grouped series when `group = TRUE`.
@@ -57,13 +57,13 @@ BiomassSeries <- function(Data,
   # If grouping is enabled, summarize the data by year and sample ID
   if (group == TRUE & length(param)>1) {
     
-    Series_prop <- Biomass_data[, .(value = mean(value)), by = .(Year, series, Color)]
+    Series_prop <- Biomass_data[, .(value = mean(value)), by = .(Year, series, Colour)]
     setnames(Series_prop, "series", "target")
-    setnames(Series_prop, "Color", "Color_target")
+    setnames(Series_prop, "Colour", "Colour_target")
     
     Biomass_data <- Biomass_data[, .(value = sum(value)), by = .(Year, Sample_id)]#Sum the biomasses
     
-    Biomass_data$Color = "#27548A"
+    Biomass_data$Colour = "#27548A"
     Biomass_data$series = grouplabel
   }
   

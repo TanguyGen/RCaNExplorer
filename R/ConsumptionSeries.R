@@ -6,7 +6,7 @@
 #'
 #' @param Data RCaNSample_long data-frame computed from the RData RCaNSample
 #' @param param A character vector containing the species for which the biomass and consumption ratios will be calculated.
-#' @param info A data frame containing additional species information (e.g., FullName, Color, Biomass).
+#' @param info A data frame containing additional species information (e.g., FullName, Colour, Biomass).
 #' @param group Logical; if TRUE, data will be grouped and summarized. Default is FALSE.
 #' @param grouplabel A string that will be used as the label for the grouped flux series when `group = TRUE`.
 #' @param ylab A string specifying the label for the y-axis of the plot. Default is "Consumption (1000t)".
@@ -58,12 +58,12 @@ ConsumptionSeries <- function(Data,
   # Join species info for Prey
   Consumption_data <- merge(Consumption_data, info, by = "ID", all.x = TRUE)
   Consumption_data[, `:=`(target = FullName,
-                          Color_target=Color,
+                          Colour_target=Colour,
               ID = series  # Update ID to Predator ID for next join
   )]
   
   # Drop unused columns before next merge
-  Consumption_data[, c("FullName", "Color") := NULL]
+  Consumption_data[, c("FullName", "Colour") := NULL]
   
   # Join species info for Predator
   Consumption_data <- merge(Consumption_data, info, by = "ID", all.x = TRUE)
@@ -75,13 +75,13 @@ ConsumptionSeries <- function(Data,
   if (group == TRUE & length(param)>1) {
     
     # Summarize by Year and Sample_id
-    Consumption_data <- Consumption_data[, .(value = sum(value)), by = .(Year,target, Sample_id,Color_target)]
+    Consumption_data <- Consumption_data[, .(value = sum(value)), by = .(Year,target, Sample_id,Colour_target)]
     
     # Add the 'series' column with grouped label
     Consumption_data[, series := grouplabel]
     
     # Add the grouped label information to the data
-    Consumption_data$Color = "#27548A"
+    Consumption_data$Colour = "#27548A"
     Consumption_data$series = grouplabel
     
   }
@@ -93,7 +93,7 @@ ConsumptionSeries <- function(Data,
       
       Data_total <- Consumption_data[series == .x,
                                      .(value = sum(value)),
-                                     by = .(Year, Sample_id, series, Color)]
+                                     by = .(Year, Sample_id, series, Colour)]
       
       # Calculate quantiles by Year and series
       quantiles <- Data_total[, .(
@@ -110,7 +110,7 @@ ConsumptionSeries <- function(Data,
       # Prepare average consumption data by prey species
       Data_byprey <- Consumption_data %>%
         filter(series == .x) %>%
-        group_by(Year, target, series, Color,Color_target) %>%
+        group_by(Year, target, series, Colour,Colour_target) %>%
         summarise(value = mean(value), .groups = "drop")
 
       # Create the quantile plot for total consumption

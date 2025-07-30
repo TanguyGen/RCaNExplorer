@@ -4,7 +4,7 @@
 #' This function makes proportion plots for the functions ConsumptionSeries,ProductionSeries, BiomassSeries and FluxSeries.
 #'
 #' @param Data RCaNSample_long data-frame calculated from the RData RCaNSample.
-#' @param info A data frame that contains additional metadata for each target. It should have the columns  `value` ,`series`, `Year`, `target`, and `Color`.
+#' @param info A data frame that contains additional metadata for each target. It should have the columns  `value` ,`series`, `Year`, `target`, and `Colour`.
 #' @param session The Shiny session object, used for responsive plot sizing based on the UI.
 #'
 #' @import dplyr
@@ -22,15 +22,15 @@ Proportion_plot <- function(Data, session) {
 
   
   Data <- Data %>%
-    select(Year, target, value,Color_target) %>%
+    select(Year, target, value,Colour_target) %>%
     group_by(Year) %>%
     mutate(proportion = value / sum(value, na.rm = TRUE)) %>%
     ungroup()
 
-  # Create named vector of colors with target names
-  color_map <- unique(Data[, c("target", "Color_target")])
+  # Create named vector of colours with target names
+  colour_map <- unique(Data[, c("target", "Colour_target")])
   # Convert to named vector for scale_fill_manual
-  color_map <- setNames(color_map$Color_target, color_map$target)
+  colour_map <- setNames(colour_map$Colour_target, colour_map$target)
 
 
   g <- ggplot(Data, aes(x = Year, y = proportion, fill = target)) +
@@ -38,7 +38,7 @@ Proportion_plot <- function(Data, session) {
              width = 1,
              colour = "black") +
     labs(y = "", x = "Year") +
-    scale_fill_manual(values = color_map) +
+    scale_fill_manual(values = colour_map) +
     theme_classic() +
     theme(
       axis.text.x = element_text(angle = 0, hjust = 0.5),

@@ -133,7 +133,8 @@ app_server <- function(input, output, session) {
   observe({
     #load the Info data frame containing the IDs, FullNames, colours and images of the ecosystem components
     if (!is.null(input$metadatafile) && length(input$metadatafile$datapath) == 1) { 
-      table <- read.csv(input$metadatafile$datapath, stringsAsFactors = FALSE) #Read uploaded table
+      uploaded_metadata <- read.csv(input$metadatafile$datapath, stringsAsFactors = FALSE) #Read uploaded table
+      if (all(c("ID, FullName, Colour")))
     } else if (is.null(data$Info)) { #load the default one
       table <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer'), stringsAsFactors = FALSE)
     } else { #load it only once
@@ -151,7 +152,7 @@ app_server <- function(input, output, session) {
         "#802268", "#6bd76b", "#d595a7", "#924822", "#837b8d", "#c75127", "#d58f5c"
       ), length.out = length(missing_ids))
       #If not recognised give them the ID from CaNSample, pass the ID as the FullName also and give a colour from the palette
-      table <- bind_rows(table, tibble(ID = missing_ids, FullName = missing_ids, Color = palette))
+      table <- bind_rows(table, tibble(ID = missing_ids, FullName = missing_ids, Colour = palette))
     }
     #Load the images from the package
     img_dir <- system.file("app/www/img", package = "RCaNExplorer")
@@ -169,6 +170,7 @@ app_server <- function(input, output, session) {
       table$ID
     )
     #Save the new table
+    
     data$Info <- table
   })
   
@@ -192,7 +194,7 @@ app_server <- function(input, output, session) {
         image = ifelse(grepl("^<img", Image), sub('^<img src="([^"]+)".*', "\\1", Image), paste0("www/img/", ID, ".png")), #load image
         opacity = ifelse(is_resolved, 1, 0.4), #If not resolved render the component more transparent
         labelHighlightBold = is_resolved, #Highlight text when component is selected only when resolved
-        color.background=Color,
+        color.background=Colour,
         color.border=ifelse(is_resolved, "black", "grey"),
         color.highlight.background=color.background,
         color.highlight.border=color.border,
@@ -406,7 +408,7 @@ app_server <- function(input, output, session) {
     ")
   })
   
-  # React to Color Picker Input 
+  # React to Colour Picker Input 
   observeEvent(input$color_change, {
     data$Info[input$color_change$row + 1, 3] <- input$color_change$color
   })

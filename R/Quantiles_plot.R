@@ -69,8 +69,8 @@ Quantiles_plot <- function(quantiles,
   # Rename last columns to S1, S2, S3
   colnames(fewseries)[(ncol(fewseries) - 2):ncol(fewseries)] <- c("S1", "S2", "S3")
   
-  color_map <- fewseries %>%
-    distinct(series, Color) %>%
+  colour_map <- fewseries %>%
+    distinct(series, Colour) %>%
     tibble::deframe()
 
 
@@ -88,8 +88,8 @@ Quantiles_plot <- function(quantiles,
     ylim(0, NA) +
     theme_classic() +
     guides(group = "none", fill = "none") +
-    scale_color_manual(values = color_map) +
-    scale_fill_manual(values = color_map) +
+    scale_colour_manual(values = colour_map) +
+    scale_fill_manual(values = colour_map) +
     theme(
       title = element_text(size = title_size),
       axis.title = element_text(size = axistitle_size),

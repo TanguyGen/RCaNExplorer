@@ -6,7 +6,7 @@
 #'
 #' @param Data RCaNSample_long data-frame computed from the RData RCaNSample
 #' @param param A character vector containing the species for which the biomass and Predation ratios will be calculated.
-#' @param info A data frame containing additional species information (e.g., FullName, Color, Biomass).
+#' @param info A data frame containing additional species information (e.g., FullName, Colour, Biomass).
 #' @param group Logical; if TRUE, data will be grouped and summarized. Default is FALSE.
 #' @param grouplabel A string that will be used as the label for the grouped flux series when `group = TRUE`.
 #' @param ylab A string specifying the label for the y-axis of the plot. Default is "Predation (1000t)".
@@ -57,12 +57,12 @@ PredationSeries <- function(Data,
   # Join species info for Prey
   Predation_data <- merge(Predation_data, info, by = "ID", all.x = TRUE)
   Predation_data[, `:=`(target = FullName,
-                        Color_target=Color,
+                        Colour_target=Colour,
               ID = series  # Update ID to Predator ID for next join
   )]
   
   # Drop unused columns before next merge
-  Predation_data[, c("FullName", "Color") := NULL]
+  Predation_data[, c("FullName", "Colour") := NULL]
   
   # Join species info for Predator
   Predation_data <- merge(Predation_data, info, by = "ID", all.x = TRUE)
@@ -77,10 +77,10 @@ PredationSeries <- function(Data,
   # If grouping is enabled, summarize the data by targeted species
   if (group == TRUE & length(param)>1) {
     # Summarize by Year and Sample_id
-    Predation_data <- Predation_data[, .(value = sum(value)), by = .(Year,target, Sample_id,Color_target)]
+    Predation_data <- Predation_data[, .(value = sum(value)), by = .(Year,target, Sample_id,Colour_target)]
     
     # Add the grouped label information to the data
-    Predation_data$Color = "#27548A"
+    Predation_data$Colour = "#27548A"
     Predation_data$series = grouplabel
   }
   
@@ -90,7 +90,7 @@ PredationSeries <- function(Data,
       
       Data_total <- Predation_data[series == .x,
                                      .(value = sum(value)),
-                                     by = .(Year, Sample_id, series, Color)]
+                                     by = .(Year, Sample_id, series, Colour)]
       
       # Calculate quantiles by Year and series
       quantiles <- Data_total[, .(
@@ -107,7 +107,7 @@ PredationSeries <- function(Data,
       # Prepare average Predation data by prey species
       Data_byprey <- Predation_data %>%
         filter(series == .x) %>%
-        group_by(Year, target, series, Color,Color_target) %>%
+        group_by(Year, target, series, Colour,Colour_target) %>%
         summarise(value = mean(value), .groups = "drop")
       
       # Create the quantile plot for total Predation

@@ -7,7 +7,7 @@
 #' @param param A character vector containing the species for which the biomass and production
 #'        ratios will be calculated.
 #' @param info A data frame containing metadata about the species, including columns like `ID`,
-#'        `FullName`, `Color`.
+#'        `FullName`, `Colour`.
 #' @param plot_series If yes, draw three example of trajectories. Default is `TRUE`.
 #' @param group A logical value indicating whether the species should be grouped together. Default is `FALSE`.
 #' @param grouplabel A character string representing the label for the grouped species if `group` is `TRUE`.
@@ -67,11 +67,11 @@ RatioProductionBiomass <- function(Data,
   
   Productions <- Productions[, .(
     production = sum(value)
-  ), by = .(series, Year, Sample_id, Color)]
+  ), by = .(series, Year, Sample_id, Colour)]
   
   # --- Merge Biomass and Production ---
   merged_data <- merge(Biomass, Productions,
-                       by = c("series", "Year", "Sample_id", "Color"),
+                       by = c("series", "Year", "Sample_id", "Colour"),
                        all = TRUE)
   merged_data[is.na(merged_data)] <- 0
   merged_data <- merged_data[Year != max(Year)]
@@ -84,18 +84,18 @@ RatioProductionBiomass <- function(Data,
     ), by = .(Year, Sample_id)]
     merged_data[, `:=`(
       series = grouplabel,
-      Color = "#27548A"
+      Colour = "#27548A"
     )]
-    setcolorder(merged_data, c("series", "biomass", "production", "Year", "Color", "Sample_id"))
+    setcolorder(merged_data, c("series", "biomass", "production", "Year", "Colour", "Sample_id"))
   }
   
   # --- Compute Ratio ---
   merged_data[, value := production / biomass]
-  ratio_data <- merged_data[, .(series, value, Year, Sample_id, Color)]
+  ratio_data <- merged_data[, .(series, value, Year, Sample_id, Colour)]
   
   # --- Quantile Calculation ---
   quantiles <- ratio_data[, as.list(quantile(value, probs = c(0, .025, .25, .5, .75, .975, 1))),
-                          by = .(Year, series, Color)]
+                          by = .(Year, series, Colour)]
   setnames(quantiles,
            old = c("0%", "2.5%", "25%", "50%", "75%", "97.5%", "100%"),
            new = c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100"))
