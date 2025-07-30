@@ -220,7 +220,7 @@ app_server <- function(input, output, session) {
     
     edges <- tibble(
       id = paste0(flux_def$From, "_", flux_def$To),
-      label = if (isTRUE(input$show_edge_labels)) paste0(flux_def$From, "_", flux_def$To) else "", #if "Show Flux Labels" ticked, show labels
+      label = if (isTRUE(input$show_edge_labels)) paste0(flux_def$Flux) else "", #if "Show Flux Labels" ticked, show labels
       from = flux_def$From,
       to = flux_def$To,
       color = list(highlight=if_else(input$Typegraph == "Flux Series","black","grey")), #if "Flux series" picked highlight edges when selected
@@ -294,7 +294,7 @@ app_server <- function(input, output, session) {
     req(input$Typegraph, input$selected_components)
     
     if(input$Typegraph=="Flux Series"){
-      data$Resolved_components<-data$CaNSample$CaNmod$fluxes_def$Flux
+      data$Resolved_components<-paste0(data$CaNSample$CaNmod$fluxes_def$From,"_",data$CaNSample$CaNmod$fluxes_def$To)
     }
     valid_selected <- intersect(input$selected_components, data$Resolved_components)
     

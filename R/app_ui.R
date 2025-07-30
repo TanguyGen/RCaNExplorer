@@ -121,22 +121,35 @@ app_ui <- function(request) {
               br(),
               introBox(
               fileInput("metadatafile", "Input a metadata file", accept = ".csv"),
-              data.step = 9,
+              data.step = 12,
               data.intro = "...that you will be able to reupload next time you use the app."
               ),
               introBox(
-              DT::DTOutput("table_info"),
-              data.step = 7,
-              data.intro = "Here you can edit the graphical features of the app and plots. 
-              The variable FullName gives the name of the ecosystem component whcih will be used for the plotting. To edit it double-click on it and make your changes. 
-              The Colour is the colour used in the plotting of the ecosystem components and of the nodes of the ecosystem network when no image is given. To edit it, click on the palette and change the colour. 
-              Lastly, to change the image used to represent the ecosystem component in the foodweb, click on the corresponding Upload button and add an image in format png, jpg, jpeg or svg. The new image should appear in the Image column."
+                data.step = 7,
+                data.intro = "Here you can edit the graphical features of the app and plots.",
+                
+                introBox(
+                  data.step = 8,
+                  data.intro = "The 'FullName' column gives the name of the ecosystem component used in plots. Double-click to edit.",
+                  
+                  introBox(
+                    data.step = 9,
+                    data.intro = "The 'Colour' column defines the plotting colour of components. Click to change it.",
+                    
+                    introBox(
+                      data.step = 10,
+                      data.intro = "Use the 'Upload' column to add an image for each ecosystem component (PNG, JPG, SVG).",
+                      
+                      DT::DTOutput("table_info")
+                    )
+                  )
+                )
               ),
               br(),
               br(),
               introBox(
               downloadButton("saveinfo", "Download new graphical metadata"),
-              data.step=8,
+              data.step=11,
               data.intro="Here you can download the edited metadata file..."
               )
             ),
