@@ -4,6 +4,7 @@
 .Ruserdata
 CaNSample20240306.Rdata
 dockerfile
+Shitlist.Rmd
 rsconnect/
 .DS_Store
 .Rbuildignore

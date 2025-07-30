@@ -47,5 +47,7 @@ validate_metadata <- function(df) {
     col
   })
   
+  df<-df|> select(ID,FullName,Colour)
+  
   return(df)
 }

@@ -37,7 +37,7 @@ RatioConsumptionBiomass <- function(Data,
   
   # Convert to data.table if not already
   Data <- data.table::as.data.table(Data)
-  
+  View(Data)
   # Extract Biomass
   Biomass <- Data[Var %in% param, .(
     ID = Var,
@@ -54,6 +54,7 @@ RatioConsumptionBiomass <- function(Data,
   # Pattern to detect relevant consumption fluxes
   pattern <- paste0("_(", paste(param, collapse = "|"), ")$")
   
+  
   # Extract Consumption
   Consumptions <- Data[grepl(pattern, Var),
                        .(
@@ -64,7 +65,6 @@ RatioConsumptionBiomass <- function(Data,
                          value
                        )
   ]
-  
   if (nrow(Consumptions) == 0) stop("param not recognized")
   
   # Merge with info and clean
@@ -100,6 +100,7 @@ RatioConsumptionBiomass <- function(Data,
   # Compute ratio
   merged_data[, value := consumption / biomass]
   ratio_data <- merged_data[, .(series, value, Year, Sample_id, Colour)]
+  
   
   # Compute quantiles
   quantiles <- ratio_data[, as.list(quantile(value, probs = c(0, .025, .25, .5, .75, .975, 1))),

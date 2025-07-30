@@ -23,7 +23,9 @@ app_server <- function(input, output, session) {
   #Function to simplify CaNSample object
   transform_CaNSample <- function(CaNSample) {
     m <- as.matrix(CaNSample$mcmc)
-    fluxes_def <- CaNSample$CaNmod$fluxes_def
+    fluxes_def <- CaNSample$CaNmod$fluxes_def |>
+      mutate(FluxName = paste0(From, "_", To))  # Create readable names
+    
     tibble::as_tibble(m) |>
       mutate(Sample_id = seq_len(nrow(m))) |>
       pivot_longer(
@@ -34,9 +36,9 @@ app_server <- function(input, output, session) {
       ) |>
       left_join(fluxes_def, by = c("Var" = "Flux")) |>
       mutate(
-        FluxTrophic = Trophic == 1
+        Var = ifelse(!is.na(FluxName), FluxName, Var)
       ) |>
-      select(Sample_id, Var, Year, value, FluxTrophic)
+      select(Sample_id, Var, Year, value)
   }
   
   #Function to load CaNSample object
@@ -160,7 +162,7 @@ app_server <- function(input, output, session) {
       ), length.out = length(missing_ids))
       #If not recognised give them the ID from CaNSample, pass the ID as the FullName also and give a colour from the palette
       metatable <- bind_rows(metatable, tibble(ID = missing_ids, FullName = missing_ids, Colour = palette))
-      showNotification("Some ID were missing and were added to the table with random colours.",type="warning")
+      showNotification("Some ecosystem components were missing from the metadata and were added to the table with random colours.",type="warning")
     }
     #Load the images from the package
     img_dir <- system.file("app/www/img", package = "RCaNExplorer")
@@ -281,7 +283,7 @@ app_server <- function(input, output, session) {
     Positions$y <- ifelse(is.na(comp_param$Y), runif(n, 0, 1), comp_param$Y)
   })
   #If we move a node, assign the new node position to the reactive value
-  observeEvent(input$node_positions, {
+  observeEvent(input$savedata, {
     Positions$x <- sapply(input$node_positions, `[[`, "x") / 1000
     Positions$y <- sapply(input$node_positions, `[[`, "y") / 1000
   })
