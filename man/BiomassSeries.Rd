@@ -21,7 +21,7 @@ BiomassSeries(
 
 \item{param}{A character vector containing the species for which the biomass and consumption ratios will be calculated.}
 
-\item{info}{A data frame containing additional species information (e.g., FullName, Color, Biomass).}
+\item{info}{A data frame containing additional species information (e.g., FullName, Colour, Biomass).}
 
 \item{plot_series}{Logical; if TRUE, plots for each series will be created. Default is TRUE.}
 

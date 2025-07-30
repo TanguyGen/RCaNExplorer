@@ -21,7 +21,7 @@ FluxSerie(
 
 \item{param}{A vector of strings specifying the fluxes.}
 
-\item{info}{A data frame containing additional information for the species, including their names and colors.}
+\item{info}{A data frame containing additional information for the species, including their names and colours.}
 
 \item{plot_series}{Logical; whether or not to plot the individual series. Default is TRUE.}
 

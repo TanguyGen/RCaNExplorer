@@ -133,45 +133,53 @@ app_server <- function(input, output, session) {
   observe({
     #load the Info data frame containing the IDs, FullNames, colours and images of the ecosystem components
     if (!is.null(input$metadatafile) && length(input$metadatafile$datapath) == 1) { 
-      uploaded_metadata <- read.csv(input$metadatafile$datapath, stringsAsFactors = FALSE) #Read uploaded table
-      if (all(c("ID, FullName, Colour")))
+      raw_metadata <- tryCatch(
+        read.csv(input$metadatafile$datapath, stringsAsFactors = FALSE),
+        error = function(e) {
+          showNotification(paste("Error reading CSV file:", e$message), type = "error")
+          return(data.frame())
+        }
+      )
+      
+      metatable <- validate_metadata(raw_metadata)
     } else if (is.null(data$Info)) { #load the default one
-      table <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer'), stringsAsFactors = FALSE)
+      metatable <- read.csv(system.file("app/www", "Info_table.csv", package = 'RCaNExplorer'), stringsAsFactors = FALSE)
     } else { #load it only once
       return() 
     }
     
     #Check wich IDs from CaNSample are described in the metadata table
     comp <- data$CaNSample$CaNmod$components_param$Component
-    if (!setequal(table$ID, comp)) {
-      table <- table |> filter(ID %in% comp)
-      missing_ids <- setdiff(comp, table$ID)
+    if (!setequal(metatable$ID, comp)) {
+      metatable <- metatable |> filter(ID %in% comp)
+      missing_ids <- setdiff(comp, metatable$ID)
       
       palette <- rep(c(
         "#5050ff", "#ce3d32", "#749b58", "#f0e685", "#466983", "#ba6338", "#5db1dd",
         "#802268", "#6bd76b", "#d595a7", "#924822", "#837b8d", "#c75127", "#d58f5c"
       ), length.out = length(missing_ids))
       #If not recognised give them the ID from CaNSample, pass the ID as the FullName also and give a colour from the palette
-      table <- bind_rows(table, tibble(ID = missing_ids, FullName = missing_ids, Colour = palette))
+      metatable <- bind_rows(metatable, tibble(ID = missing_ids, FullName = missing_ids, Colour = palette))
+      showNotification("Some ID were missing and were added to the table with random colours.",type="warning")
     }
     #Load the images from the package
     img_dir <- system.file("app/www/img", package = "RCaNExplorer")
     existing_images <- list.files(img_dir)
     
     #Check which imaes correspond to the Ids
-    table$Image <- sprintf("www/img/%s.png", table$ID)
-    table$Image <- ifelse(paste0(table$ID, ".png") %in% existing_images,
-                          sprintf('<img src="%s" width="60px" />', table$Image),
+    metatable$Image <- sprintf("www/img/%s.png", metatable$ID)
+    metatable$Image <- ifelse(paste0(metatable$ID, ".png") %in% existing_images,
+                          sprintf('<img src="%s" width="60px" />', metatable$Image),
                           '<span style="color:gray;">No image</span>') #If not existing assign a basic style
     
     #Add an upload button for the metadata
-    table$Upload <- sprintf(
+    metatable$Upload <- sprintf(
       '<label class="custom-upload">Upload<input type="file" class="image-upload" data-id="%s" accept=".png,.jpg,.jpeg,.svg" style="display:none;" /></label>',
-      table$ID
+      metatable$ID
     )
     #Save the new table
     
-    data$Info <- table
+    data$Info <- metatable
   })
   
   #Create the ecosystem network representation

@@ -23,7 +23,7 @@ RatioProductionBiomass(
 ratios will be calculated.}
 
 \item{info}{A data frame containing metadata about the species, including columns like `ID`,
-`FullName`, `Color`.}
+`FullName`, `Colour`.}
 
 \item{plot_series}{If yes, draw three example of trajectories. Default is `TRUE`.}
 

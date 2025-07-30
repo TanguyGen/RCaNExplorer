@@ -11,7 +11,7 @@ Proportion_plot(Data, session)
 
 \item{session}{The Shiny session object, used for responsive plot sizing based on the UI.}
 
-\item{info}{A data frame that contains additional metadata for each target. It should have the columns  `value` ,`series`, `Year`, `target`, and `Color`.}
+\item{info}{A data frame that contains additional metadata for each target. It should have the columns  `value` ,`series`, `Year`, `target`, and `Colour`.}
 }
 \value{
 A ggplot object representing the proportion bar plot.
