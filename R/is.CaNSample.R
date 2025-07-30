@@ -38,7 +38,7 @@ is.CaNSample <- function(obj) {
     return(FALSE)
   } 
   if (!coda::is.mcmc.list(obj$mcmc)) {
-    warning("The mcmc list does notan mcmc.list object. ")
+    warning("The mcmc variable is not a mcmc.list object. ")
     return(FALSE)
   } 
   

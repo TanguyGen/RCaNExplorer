@@ -18,7 +18,7 @@
 #' @import tidyr
 #' @import data.table
 
-FluxSerie <- function(Data,
+FluxSeries <- function(Data,
                       param,
                       info,
                       plot_series = TRUE,

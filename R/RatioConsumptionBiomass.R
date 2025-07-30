@@ -37,7 +37,7 @@ RatioConsumptionBiomass <- function(Data,
   
   # Convert to data.table if not already
   Data <- data.table::as.data.table(Data)
-  View(Data)
+
   # Extract Biomass
   Biomass <- Data[Var %in% param, .(
     ID = Var,

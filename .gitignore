@@ -9,5 +9,4 @@ rsconnect/
 .DS_Store
 .Rbuildignore
 inst/app/www/.DS_Store
-tests/
 app.R

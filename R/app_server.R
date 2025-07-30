@@ -20,44 +20,6 @@ app_server <- function(input, output, session) {
     Resolved_components = NULL
   )
   
-  #Function to simplify CaNSample object
-  transform_CaNSample <- function(CaNSample) {
-    m <- as.matrix(CaNSample$mcmc)
-    fluxes_def <- CaNSample$CaNmod$fluxes_def |>
-      mutate(FluxName = paste0(From, "_", To))  # Create readable names
-    
-    tibble::as_tibble(m) |>
-      mutate(Sample_id = seq_len(nrow(m))) |>
-      pivot_longer(
-        cols = -Sample_id,
-        names_to = c("Var", "Year"),
-        names_pattern = "(.*)\\[(.*)\\]",
-        values_to = 'value'
-      ) |>
-      left_join(fluxes_def, by = c("Var" = "Flux")) |>
-      mutate(
-        Var = ifelse(!is.na(FluxName), FluxName, Var)
-      ) |>
-      select(Sample_id, Var, Year, value)
-  }
-  
-  #Function to load CaNSample object
-  load_CaNSample <- function(path_or_url) {
-    data$CaNSample = NULL
-    data$CaNSample_long = NULL
-    data$Info = NULL
-    data$Resolution = NULL
-    data$Resolved_components = NULL
-    e <- new.env()
-    load(path_or_url, envir = e)
-    objs <- ls(envir = e)
-    if (length(objs) != 1) {
-      showNotification("RData must contain exactly one object.", type = "error")
-      return(NULL)
-    }
-    e[[objs[[1]]]]
-  }
-  
   
   observe({
     obj <- NULL
@@ -74,6 +36,11 @@ app_server <- function(input, output, session) {
     
     #Assign to the reactive data "data" to store it
     if (!is.null(obj)) { 
+      data$CaNSample = NULL
+      data$CaNSample_long = NULL
+      data$Info = NULL
+      data$Resolution = NULL
+      data$Resolved_components = NULL
       if(is.CaNSample(obj)){ #Check that it is a CaNSample object
         data$CaNSample <- obj
         data$CaNSample_long <- transform_CaNSample(obj)
@@ -322,7 +289,7 @@ app_server <- function(input, output, session) {
     "Biomass Series"             = BiomassSeries,
     "Consumption Series"         = ConsumptionSeries,
     "Predation and Catch Series" = PredationSeries,
-    "Flux Series"                = FluxSerie,
+    "Flux Series"                = FluxSeries,
     "Ratio Consumption/Biomass"  = RatioConsumptionBiomass,
     "Ratio Production/Biomass"   = RatioProductionBiomass,
     "Mortality Series"           = MortalitySeries

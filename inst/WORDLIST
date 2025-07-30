@@ -1,9 +1,15 @@
 BiomassSeries
 Biomasses
+CaNSample
+CaNmod
+Colour
 ConsumptionSeries
 FluxSerie
+FluxSeries
 FullName
+MortalitySeries
 Optionnal
+Predation
 PredationSeries
 ProductionSeries
 RCaN
@@ -14,8 +20,11 @@ RData
 UI
 Unitless
 colour
+colours
+covMat
 ggplot
 golem
+mcmc
 ploted
 predation
 rcan
