@@ -16,7 +16,8 @@
 #' @return A `ggplot` object that visualizes the predation data for the selected species, with two plots combined
 #'         using `patchwork`.
 #'
-#' @import tidyverse
+#' @import dplyr
+#' @import tidyr
 #' @import ggplot2
 #' @import patchwork
 #' @import data.table
