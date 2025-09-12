@@ -9,8 +9,7 @@
 #' @import rintrojs
 #' @noRd
 app_server <- function(input, output, session) {
-  options(shiny.maxRequestSize = 1000 * 1024 ^ 2)
-  
+  options(shiny.maxRequestSize = 1000 * 1024 ^ 2, timeout = 600)
   #Store the data
   data <- reactiveValues(
     CaNSample = NULL,
