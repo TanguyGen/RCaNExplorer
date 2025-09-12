@@ -47,6 +47,12 @@ body {
   margin-right: 10px;
 }
 
+.logo_imr {
+  height: 150px;
+  width: auto;
+  margin-left: 10px;
+}
+
 
 div.row {
   position: relative;

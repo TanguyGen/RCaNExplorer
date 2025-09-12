@@ -32,7 +32,8 @@ app_ui <- function(request) {
                 span("RCaN Explorer", class = "app-title")
             ),
             div(class = "header-right",
-                img(src = "www/inrae_logo.png", class = "logo_inrae")) # empty div to balance flex space
+                img(src = "www/inrae_logo.png", class = "logo_inrae")),
+            img(src = "www/IMR_logo.jpg", class = "logo_imr") 
         )
       }),
       sidebarLayout(
@@ -118,6 +119,8 @@ app_ui <- function(request) {
             tabPanel(
               "Metadata",
               introBox(
+              data.step = 6,
+              data.intro = "On this metadata tab, you will be able to edit the graphical features of the plots and of the food web network.",
               br(),
               introBox(
               fileInput("metadatafile", "Input a metadata file", accept = ".csv"),
@@ -127,7 +130,6 @@ app_ui <- function(request) {
               introBox(
                 data.step = 7,
                 data.intro = "Here you can edit the graphical features of the app and plots.",
-                
                 introBox(
                   data.step = 8,
                   data.intro = "The 'FullName' column gives the name of the ecosystem component used in plots. Double-click to edit.",
@@ -152,9 +154,7 @@ app_ui <- function(request) {
               data.step=11,
               data.intro="Here you can download the edited metadata file..."
               )
-            ),
-            data.step = 6,
-            data.intro = "On this metadata tab, you will be able to edit the graphical features of the plots and of the food web network."
+            )
             )
           )
         )
