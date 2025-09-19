@@ -165,6 +165,9 @@ MortalitySeries <- function(Data,
 
       Z_mortal <- mortal[Mortality == "Z"][, Mortality := NULL]
       
+      width <- session$clientData$output_Graphs_width
+      sub_title_size <- max(ceiling(width / 20), 14)
+      
       #Quantile plot for total mortality
       p1 <- Quantiles_plot(Z_quantiles,
                            Z_mortal,
@@ -172,7 +175,10 @@ MortalitySeries <- function(Data,
                            facet,
                            ylab,
                            session = session)+
-        labs(title=.x,subtitle = "Total mortality")  
+        labs(title=.x,subtitle = "Total mortality")   +
+        theme(
+          plot.subtitle = element_text(size = sub_title_size)
+        )
       
       
       F_quantiles <- quantiles[Mortality == "F"][, Mortality := NULL]
@@ -186,7 +192,10 @@ MortalitySeries <- function(Data,
                            facet,
                            ylab,
                            session = session)+
-        labs(subtitle = "Fishing mortality")
+        labs(subtitle = "Fishing mortality") +
+        theme(
+          plot.subtitle = element_text(size = sub_title_size)
+        )
       
       M_quantiles <- quantiles[Mortality == "M"][, Mortality := NULL]
       M_mortal    <- mortal[Mortality == "M"][, Mortality := NULL]
@@ -197,32 +206,48 @@ MortalitySeries <- function(Data,
                            facet,
                            ylab,
                            session = session)+
-        labs(subtitle = "Natural mortality")  
+        labs(subtitle = "Natural mortality")   +
+        theme(
+          plot.subtitle = element_text(size = sub_title_size)
+        )
+      
+      G_quantiles <- quantiles[Mortality == "G"][, Mortality := NULL]
+      G_mortal    <- mortal[Mortality == "G"][, Mortality := NULL]
+      
+      p4 <- Quantiles_plot(G_quantiles,
+                           G_mortal,
+                           selectedsamples,
+                           facet,
+                           ylab,
+                           session = session)+
+        labs(subtitle = "Growth")   +
+        theme(
+          plot.subtitle = element_text(size = sub_title_size)
+        )
 
       Ratio_mortal<-mortal%>%
         filter(Mortality %in% c("F","M"))%>%
-        group_by(Year, series,Colour, Mortality) %>%
-        summarise(value = mean(value), .groups = "drop")%>%
-        ungroup()%>%
-        mutate(Colour_target=if_else(Mortality=="M","#6c9a8b","#e8998d"))%>%
-        rename(target=Mortality)%>%
-        select(Year, series, target, Colour_target, value)
+        pivot_wider(
+          names_from = Mortality,
+          values_from = value
+        )
         
-      
-      p4<-Proportion_plot(Ratio_mortal,  session = session)+
-        labs(subtitle = "Mortality ratio") 
+      p5<-Fuzzy_proportion_plot(Ratio_mortal,  session = session)+
+        labs(subtitle = "Mortality ratio")  +
+        theme(
+          plot.subtitle = element_text(size = sub_title_size)
+        )
         
       
       
       # Combine the two plots using patchwork layout
-      p <- (p1 + p2)/(p3+p4)
+      p <- (p1 + p2 + p3)/(p4 + p5)
   
       return(p)
     })
   
-  
-  # Adjust the title size based on plot width
   width <- session$clientData$output_Graphs_width
+  # Adjust the title size based on plot width
   bigtitle_size <- max(ceiling(width / 10), 30)
   
   # Combine all individual plots into a single plot with a title
