@@ -98,7 +98,7 @@ PredationSeries <- function(Data,
       ), by = .(Year, series)]
       
       # Expand quantiles into separate columns
-      quantiles[, c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100") := transpose(quantiles)]
+      quantiles[, c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100") := lapply(transpose(quantiles[, .(quantiles)]), unlist)]
       
       # Remove the list column
       quantiles[, quantiles := NULL]
