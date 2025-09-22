@@ -2,7 +2,7 @@
 % Please edit documentation in R/Fuzzy_proportion_plot.R
 \name{Fuzzy_proportion_plot}
 \alias{Fuzzy_proportion_plot}
-\title{Proportion Plot}
+\title{Fuzzy proportion Plot}
 \usage{
 Fuzzy_proportion_plot(Data, session)
 }
@@ -17,6 +17,5 @@ Fuzzy_proportion_plot(Data, session)
 A ggplot object representing the proportion bar plot.
 }
 \description{
-Creates a bar plot showing the proportion of the value of each targetted species relative to the total for each Year.
-This function makes proportion plots for the functions ConsumptionSeries,ProductionSeries, BiomassSeries and FluxSeries.
+Creates a bar plot showing the proportion of the value of each Natural and fishing mortalities with a blurry limit representing the variance of the values.
 }
