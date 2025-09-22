@@ -1,7 +1,6 @@
-#' Proportion Plot
+#' Fuzzy proportion Plot
 #'
-#' Creates a bar plot showing the proportion of the value of each targetted species relative to the total for each Year.
-#' This function makes proportion plots for the functions ConsumptionSeries,ProductionSeries, BiomassSeries and FluxSeries.
+#' Creates a bar plot showing the proportion of the value of each Natural and fishing mortalities with a blurry limit representing the variance of the values.
 #'
 #' @param Data RCaNSample_long data-frame calculated from the RData RCaNSample.
 #' @param info A data frame that contains additional metadata for each target. It should have the columns  `value` ,`series`, `Year`, `target`, and `Colour`.
