@@ -339,8 +339,37 @@ app_server <- function(input, output, session) {
     width * ceiling(num_plots / 3)
   }))
   
+  memory <- reactiveValues(
+    Serie_desc = NULL
+  )
+  observe({
+    req(data$CaNSample, input$Typegraph,input$selected_components)
+    new_row<-data.frame(Variable = input$Typegraph, Components = input$selected_components)
+    if(is.null(memory$Serie_desc)){
+      memory$Serie_desc <- new_row
+    }else{
+      memory$Serie_desc <-rbind(memory$Serie_desc, new_row)
+    }
+   
+    
+    Serie_desc<-data.table()
+  })
+  
+  output$table_series <- DT::renderDT({
+    req(memory$Serie_desc)
+    data<- memory$Serie_desc
+    DT::datatable(
+      data,
+      rownames = FALSE,
+      selection = list(mode = "multiple", selected = NULL, target = "row"),
+      options = list(pageLength = 15, scrollX = TRUE)
+    )
+  })
+  
+  
   # Render an editable Info Table 
   output$table_info <- DT::renderDT({
+    req( memory$Serie_desc)
     DT::datatable(
       data$Info,
       editable = list(target = "cell", disable = list(columns = c(0))),
