@@ -120,7 +120,8 @@ app_ui <- function(request) {
               "Download series",
               br(),
               introBox(
-                DT::DTOutput("table_info"),
+                DT::DTOutput("table_series"),
+                br(),
                 downloadButton("saveseries", "Download RData"),
                 data.step = 5,
                 data.intro = "The plots will appear on this pannel. You will be automatically redirected here when clicking on the  'Continue' button."

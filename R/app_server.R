@@ -340,23 +340,40 @@ app_server <- function(input, output, session) {
   }))
   
   memory <- reactiveValues(
-    Serie_desc = NULL
+    Serie_desc = data.frame(
+      Variable = character(),
+      Components = character(),
+      stringsAsFactors = FALSE
+    )
   )
+  
   observe({
     req(data$CaNSample, input$Typegraph,input$selected_components)
-    new_row<-data.frame(Variable = input$Typegraph, Components = input$selected_components)
-    if(is.null(memory$Serie_desc)){
-      memory$Serie_desc <- new_row
-    }else{
-      memory$Serie_desc <-rbind(memory$Serie_desc, new_row)
-    }
-   
     
-    Serie_desc<-data.table()
+    new_row <- data.frame(
+      Variable = input$Typegraph,
+      Components = input$selected_components,
+      stringsAsFactors = FALSE
+    )
+    
+    
+    # If memory is empty
+    if (nrow(memory$Serie_desc) == 0) {
+      memory$Serie_desc <- new_row
+    } else {
+      # Keep only rows not already in memory
+      is_new <- !apply(new_row, 1, function(r) {
+        any(apply(memory$Serie_desc, 1, function(m) all(m == r)))
+      })
+      
+      if (any(is_new)) {
+        memory$Serie_desc <- rbind(memory$Serie_desc, new_row[is_new, ])
+      }
+    }
   })
   
   output$table_series <- DT::renderDT({
-    req(memory$Serie_desc)
+    req(data$CaNSample,memory$Serie_desc)
     data<- memory$Serie_desc
     DT::datatable(
       data,
