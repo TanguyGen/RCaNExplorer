@@ -34,7 +34,7 @@ FluxSeries(
 \item{session}{The Shiny session object, which is used to get the width of the plot to adjust text size.}
 }
 \value{
-A `ggplot` object that visualizes the quantiles of the flux data.
+A list containing the `ggplot` object that visualizes the quantiles of the flux data and a data.frame containing the quantiles data.
 }
 \description{
 This function calculates quantiles for fluxes (transitions between prey and predator) over time,

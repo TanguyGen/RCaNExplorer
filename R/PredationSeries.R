@@ -13,8 +13,8 @@
 #' @param facet Logical; if TRUE, the plot will be faceted for each species. Default is FALSE.
 #' @param session The Shiny session object, used for adjusting plot text size based on plot width.
 #'
-#' @return A `ggplot` object that visualizes the predation data for the selected species, with two plots combined
-#'         using `patchwork`.
+#' @return A list containing a `ggplot` object that visualizes the predation data for the selected species, with two plots combined
+#'         using `patchwork` and a data.frame saving the quantiles data.
 #'
 #' @import dplyr
 #' @import tidyr
@@ -30,13 +30,14 @@ PredationSeries <- function(Data,
                             ylab = "Predation (1000t)",
                             facet = FALSE,
                             session) {
+  
+  # Transform to data.table for faster computing
+  Data <- data.table::as.data.table(Data$CaNSample_long)
+  
   # Take consistent random samples for overlay in the plot
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
-  
-  # Transform to data.table for faster computing
-  Data <- data.table::as.data.table(Data)
-  
+
   #  Create the patterns of interest <Prey>_<Targeted species>
   pattern <- paste0("^(", paste(param, collapse = "|"), ")_") #Get the patterns of interest <Targeted species>_<Predator>
   
@@ -84,7 +85,7 @@ PredationSeries <- function(Data,
     Predation_data$series = grouplabel
   }
   
-  listplot <- unique(Predation_data$series) %>%
+  listres <- unique(Predation_data$series) %>%
     purrr::map(function(.x) {
       # Calculate quantiles for the current series
       
@@ -127,9 +128,14 @@ PredationSeries <- function(Data,
       
       # Combine the two plots using patchwork layout
       p <- p1 + p2
-      return(p)
+      return(list(Plot = p, Quantiles = quantiles))
     })
   
+  # Extract all plots
+  listplot <- purrr::map(listres, "Plot")
+  
+  # Bind all quantiles into one df
+  quantiles <- dplyr::bind_rows(purrr::map(listres, "Quantiles"))
   
   # Adjust the title size based on plot width
   width <- session$clientData$output_Graphs_width
@@ -144,6 +150,9 @@ PredationSeries <- function(Data,
       )
     )
   
-  # Return the final combined plot
-  return(plot_result)
+  res<-  list(
+    Plot = plot_result,
+    Quantiles = cbind(Variable=ylab,quantiles)
+  )
+  return(res)
 }

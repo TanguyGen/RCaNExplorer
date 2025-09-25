@@ -13,13 +13,13 @@
 #' @param facet Logical; if TRUE, the plot will be faceted for each species. Default is TRUE.
 #' @param session The Shiny session object, used for adjusting plot text size based on plot width.
 #'
-#' @return A `ggplot` object that visualizes the biomass data for the selected species, showing quantiles over time.
+#' @return A list containing a`ggplot` object that visualizes the biomass data for the selected species, showing quantiles over time and a table saving the quantiles data for download.
 #'
 #' @import dplyr
 #' @import tidyr
 #' @import data.table
 
-BiomassSeries <- function(Data,
+BiomassSeries <- function(data,
                           param,
                           info,
                           plot_series = TRUE,
@@ -28,12 +28,15 @@ BiomassSeries <- function(Data,
                           ylab = "Biomass (1000t)",
                           facet = TRUE,
                           session) {
+  
+  
+  # Transform to data.table for faster computing
+  Data <- data.table::as.data.table(data$CaNSample_long)
+  
   # Select 3 sample lines for consistent overlay in the plot
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
     
-  
-  Data <- data.table(Data)
   
   # Filter the data to include only biomasses of targeted species
   Biomass_data <- Data[Var %in% param, .(
@@ -78,7 +81,6 @@ BiomassSeries <- function(Data,
   
   colnames(quantiles)[(ncol(quantiles) - 6):ncol(quantiles)] <-
     c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100")
-  
 
   
   # Generate the plot using the 'Quantiles_plot' function
@@ -99,7 +101,9 @@ BiomassSeries <- function(Data,
     g<-g1
   }
   
-  
-  # Return the generated plot
-  return(g)
+  res<-  list(
+    Plot = g,
+    Quantiles = cbind(Variable=ylab,quantiles)
+  )
+  return(res)
 }

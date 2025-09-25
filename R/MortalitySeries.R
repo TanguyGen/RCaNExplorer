@@ -13,8 +13,8 @@
 #' @param facet Logical; if TRUE, the plot will be faceted for each species. Default is FALSE.
 #' @param session The Shiny session object, used for adjusting plot text size based on plot width.
 #'
-#' @return A `ggplot` object that visualizes the predation data for the selected species, with two plots combined
-#'         using `patchwork`.
+#' @return A list containing the `ggplot` object that visualizes the predation data for the selected species, with two plots combined
+#'         using `patchwork` and a data.frame saving the quantiles data.
 #'
 #' @import ggplot2
 #' @import patchwork
@@ -29,12 +29,13 @@ MortalitySeries <- function(Data,
                             facet = FALSE,
                             session) {
   
+  
+  # Transform to data.table for faster computing
+  Data <- data.table::as.data.table(Data$CaNSample_long)
+  
   # Select 3 random sample lines for consistent overlay in the plot
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
-  #standardise names
-  Data <- Data %>%
-    rename(Sample_id = Sample_id, Year = Year, Var = Var)
   
   # Convert Data to data.table for fast computing
   setDT(Data)
@@ -147,7 +148,7 @@ MortalitySeries <- function(Data,
   Mortalities <- Mortalities[, .SD, .SDcols = c("Year", "Sample_id", "Colour","series","Z","F","M","G")]
   
   # Create a list of plots for each unique series
-  listplot <- unique(Mortalities$series) %>%
+  listres <- unique(Mortalities$series) %>%
     purrr::map(function(.x) {
       
       mortal <- Mortalities[series == .x, 
@@ -243,8 +244,14 @@ MortalitySeries <- function(Data,
       # Combine the two plots using patchwork layout
       p <- (p1 + p2 + p3)/(p4 + p5)
   
-      return(p)
+      return(list(Plot = p, Quantiles = quantiles))
     })
+  
+  # Extract all plots
+  listplot <- purrr::map(listres, "Plot")
+  
+  # Bind all quantiles into one df
+  quantiles <- dplyr::bind_rows(purrr::map(listres, "Quantiles"))
   
   width <- session$clientData$output_Graphs_width
   # Adjust the title size based on plot width
@@ -259,8 +266,12 @@ MortalitySeries <- function(Data,
       )
     )
   
-  # Return the final combined plot
-  return(plot_result)
+  res<-  list(
+    Plot = plot_result,
+    Quantiles = cbind(Variable=ylab,quantiles)
+  )
+  return(res)
 }
+
 
 

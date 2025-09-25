@@ -12,7 +12,7 @@
 #' @param facet Logical; whether or not to create separate facets for each flux. Default is TRUE.
 #' @param session The Shiny session object, which is used to get the width of the plot to adjust text size.
 #'
-#' @return A `ggplot` object that visualizes the quantiles of the flux data.
+#' @return A list containing the `ggplot` object that visualizes the quantiles of the flux data and a data.frame containing the quantiles data.
 #'
 #' @import dplyr
 #' @import tidyr
@@ -27,12 +27,15 @@ FluxSeries <- function(Data,
                       ylab = "Flux (1000t)",
                       facet = TRUE,
                       session) {
+  
+  
+  # Transform to data.table for faster computing
+  Data <- data.table::as.data.table(Data$CaNSample_long)
+  
   # Take consistent random samples for overlay
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
   
-  # Ensure both Data and info are data.tables
-  Data <- as.data.table(Data)
   info <- as.data.table(info)
   
   # Filter only needed rows
@@ -129,5 +132,10 @@ FluxSeries <- function(Data,
     g<-g1
   }
   
-  return(g)
+  res<-  list(
+    Plot = g,
+    Quantiles = cbind(Variable=ylab,quantiles)
+  )
+  return(res)
 }
+

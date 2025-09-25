@@ -13,8 +13,8 @@
 #' @param facet Logical; if TRUE, the plot will be faceted for each species. Default is FALSE.
 #' @param session The Shiny session object, used for adjusting plot text size based on plot width.
 #'
-#' @return A `ggplot` object that visualizes the consumption data for the selected species, with two plots combined
-#'         using `patchwork`.
+#' @return A list containing a `ggplot` object that visualizes the consumption data for the selected species, with two plots combined
+#'         using `patchwork` and a data.frame containing the quantiles to be downloaded.
 #'
 #' @import dplyr
 #' @import tidyr
@@ -31,11 +31,13 @@ ConsumptionSeries <- function(Data,
                               ylab = "Consumption (1000t)",
                               facet = FALSE,
                               session) {
+  
+  # Transform to data.table for faster computing
+  Data <- data.table::as.data.table(Data$CaNSample_long)
+  
   # Select a few sample lines for overlay in the plot
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
-  # Transform to data.table for faster computing
-  Data <- data.table::as.data.table(Data)
   
   #  Create the patterns of interest <Prey>_<Targeted species>
   pattern <- paste0("_(", paste(param, collapse = "|"), ")$")
@@ -87,7 +89,7 @@ ConsumptionSeries <- function(Data,
   }
   
   # Create a list of plots for each unique series
-  listplot <- unique(Consumption_data$series) %>%
+  listres <- unique(Consumption_data$series) %>%
     purrr::map(function(.x) {
       # Calculate quantiles for the current series
       
@@ -131,8 +133,15 @@ ConsumptionSeries <- function(Data,
 
       # Combine the two plots using patchwork layout
       p <- p1 + p2
-      return(p)
+      
+      return(list(Plot = p, Quantiles = quantiles))
     })
+  
+  # Extract all plots
+  listplot <- purrr::map(listres, "Plot")
+  
+  # Bind all quantiles into one df
+  quantiles <- dplyr::bind_rows(purrr::map(listres, "Quantiles"))
   
   
   # Adjust the title size based on plot width
@@ -148,6 +157,10 @@ ConsumptionSeries <- function(Data,
       )
     )
   
-  # Return the final combined plot
-  return(plot_result)
+  res<-  list(
+    Plot = plot_result,
+    Quantiles = cbind(Variable=ylab,quantiles)
+  )
+
+  return(res)
 }

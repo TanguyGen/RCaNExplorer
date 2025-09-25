@@ -5,7 +5,7 @@
 \title{BiomassSeries Function}
 \usage{
 BiomassSeries(
-  Data,
+  data,
   param,
   info,
   plot_series = TRUE,
@@ -17,8 +17,6 @@ BiomassSeries(
 )
 }
 \arguments{
-\item{Data}{RCaNSample_long data-frame computed from the RData RCaNSample}
-
 \item{param}{A character vector containing the species for which the biomass and consumption ratios will be calculated.}
 
 \item{info}{A data frame containing additional species information (e.g., FullName, Colour, Biomass).}
@@ -34,9 +32,11 @@ BiomassSeries(
 \item{facet}{Logical; if TRUE, the plot will be faceted for each species. Default is TRUE.}
 
 \item{session}{The Shiny session object, used for adjusting plot text size based on plot width.}
+
+\item{Data}{RCaNSample_long data-frame computed from the RData RCaNSample}
 }
 \value{
-A `ggplot` object that visualizes the biomass data for the selected species, showing quantiles over time.
+A list containing a`ggplot` object that visualizes the biomass data for the selected species, showing quantiles over time and a table saving the quantiles data for download.
 }
 \description{
 This function calculates and visualizes biomass data over time for a set of species. It generates a plot

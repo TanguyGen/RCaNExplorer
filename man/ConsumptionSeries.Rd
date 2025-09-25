@@ -33,8 +33,8 @@ ConsumptionSeries(
 \item{session}{The Shiny session object, used for adjusting plot text size based on plot width.}
 }
 \value{
-A `ggplot` object that visualizes the consumption data for the selected species, with two plots combined
-        using `patchwork`.
+A list containing a `ggplot` object that visualizes the consumption data for the selected species, with two plots combined
+        using `patchwork` and a data.frame containing the quantiles to be downloaded.
 }
 \description{
 This function calculates and visualizes consumption fluxes over time for a set of species. It generates

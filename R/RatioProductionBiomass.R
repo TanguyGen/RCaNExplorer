@@ -16,7 +16,7 @@
 #' @param facet A logical value indicating whether to facet the plot by species. Default is `TRUE`.
 #' @param session The Shiny session object, passed for client-side session data.
 #'
-#' @return A ggplot2 object containing the plot of production-to-biomass ratios.
+#' @return A list containing a ggplot2 object which is the plot of production-to-biomass ratios and a data.frame containing the quantiles data.
 #'
 #' @import dplyr
 #' @import tidyr
@@ -29,14 +29,16 @@ RatioProductionBiomass <- function(Data,
                                    plot_series = TRUE,
                                    group,
                                    grouplabel,
-                                   ylab = "Unitless",
+                                   ylab = "Ratio Production/Biomass",
                                    facet = TRUE,
                                    session) {
+  
+  # Transform to data.table for faster computing
+  Data <- data.table::as.data.table(Data$CaNSample_long)
+  
   # Select 3 random samples for illustrative trajectories
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
-  # Ensure Data is a data.table
-  Data <- data.table::as.data.table(Data)
   
   # --- Biomass Extraction ---
   Biomass <- Data[Var %in% param, .(
@@ -110,5 +112,9 @@ RatioProductionBiomass <- function(Data,
     session = session
   )
   
-  return(g)
+  res<-  list(
+    Plot = g,
+    Quantiles = cbind(Variable=ylab,quantiles)
+  )
+  return(res)
 }

@@ -11,7 +11,7 @@ RatioProductionBiomass(
   plot_series = TRUE,
   group,
   grouplabel,
-  ylab = "Unitless",
+  ylab = "Ratio Production/Biomass",
   facet = TRUE,
   session
 )
@@ -39,7 +39,7 @@ Default is `"Default Group Name"`.}
 \item{session}{The Shiny session object, passed for client-side session data.}
 }
 \value{
-A ggplot2 object containing the plot of production-to-biomass ratios.
+A list containing a ggplot2 object which is the plot of production-to-biomass ratios and a data.frame containing the quantiles data.
 }
 \description{
 This function calculates the ratio of production to biomass for a set of species and

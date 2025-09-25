@@ -33,8 +33,8 @@ PredationSeries(
 \item{session}{The Shiny session object, used for adjusting plot text size based on plot width.}
 }
 \value{
-A `ggplot` object that visualizes the predation data for the selected species, with two plots combined
-        using `patchwork`.
+A list containing a `ggplot` object that visualizes the predation data for the selected species, with two plots combined
+        using `patchwork` and a data.frame saving the quantiles data.
 }
 \description{
 This function calculates and visualizes predation fluxes over time for a set of species. It generates

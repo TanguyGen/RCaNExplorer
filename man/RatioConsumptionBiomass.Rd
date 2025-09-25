@@ -11,7 +11,7 @@ RatioConsumptionBiomass(
   plot_series = TRUE,
   group,
   grouplabel,
-  ylab = "Unitless",
+  ylab = "Ratio Consumption/Biomass",
   facet = TRUE,
   session
 )
@@ -39,7 +39,7 @@ Default is `"Default Group Name"`.}
 \item{session}{The Shiny session object, passed for client-side session data.}
 }
 \value{
-A ggplot2 object containing the plot of consumption-to-biomass ratios.
+A list containing a ggplot2 object which is the plot of consumption-to-biomass ratios and a data.frame saving the quantiles data.
 }
 \description{
 This function calculates the ratio of consumption to biomass for a set of species and

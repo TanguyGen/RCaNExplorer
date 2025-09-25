@@ -27,6 +27,7 @@ Quantiles_plot <- function(quantiles,
   axistitle_size <- max(ceiling(width / 60), 12)  # Adjust axis title size
   text_size <- max(ceiling(width / 80), 12)  # Adjust axis text size
   
+  
   # Base plot with confidence ribbons
   g <- ggplot() +
     geom_ribbon(data = quantiles,

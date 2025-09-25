@@ -31,8 +31,8 @@ MortalitySeries(
 \item{session}{The Shiny session object, used for adjusting plot text size based on plot width.}
 }
 \value{
-A `ggplot` object that visualizes the predation data for the selected species, with two plots combined
-        using `patchwork`.
+A list containing the `ggplot` object that visualizes the predation data for the selected species, with two plots combined
+        using `patchwork` and a data.frame saving the quantiles data.
 }
 \description{
 This function calculates and visualizes mortality over time for a set species. It generates

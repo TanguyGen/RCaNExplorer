@@ -19,6 +19,15 @@ app_server <- function(input, output, session) {
     Resolved_components = NULL
   )
   
+  memory <- reactiveValues(
+    Serie_desc = data.frame(
+      Variable = character(),
+      Components = character(),
+      stringsAsFactors = FALSE
+    ),
+    Quantiles=data.frame()
+  )
+  
   
   observe({
     obj <- NULL
@@ -317,8 +326,8 @@ app_server <- function(input, output, session) {
       return(NULL)
     }
     
-    plot_func(
-      data$CaNSample_long,
+    plot_res<-plot_func(
+      data,
       ecosystem_components,
       info       = Info_table,
       group      = input$groupspecies,
@@ -327,9 +336,14 @@ app_server <- function(input, output, session) {
     )
   })
   
+  observeEvent(plot_obj(), {
+    res <- plot_obj()
+    memory$Quantiles <- rbind(memory$Quantiles, res$Quantiles)
+  })
+  
   # Render Plot
   output$Plots <- renderPlot({
-    plot_obj()
+    plot_obj()$Plot
   }, height = reactive({
     width <- session$clientData$output_Plots_width
     num_plots <- if (input$groupspecies) 1 else length(input$selected_components)
@@ -338,14 +352,6 @@ app_server <- function(input, output, session) {
     if(input$Typegraph=="Mortality Series") return(width * ceiling(num_plots / 1.5))
     width * ceiling(num_plots / 3)
   }))
-  
-  memory <- reactiveValues(
-    Serie_desc = data.frame(
-      Variable = character(),
-      Components = character(),
-      stringsAsFactors = FALSE
-    )
-  )
   
   observe({
     req(data$CaNSample, input$Typegraph,input$selected_components)
@@ -384,9 +390,18 @@ app_server <- function(input, output, session) {
   })
   
   
+  output$saveseries <- downloadHandler(
+    filename = paste0("RCaN_series", format(Sys.time(), "%d-%m-%Y"), ".csv"),
+    content = function(file) {
+      write.csv(memory$Quantiles,file, row.names = FALSE)
+    }
+  )
+  
+  
   # Render an editable Info Table 
   output$table_info <- DT::renderDT({
     req( memory$Serie_desc)
+    
     DT::datatable(
       data$Info,
       editable = list(target = "cell", disable = list(columns = c(0))),
