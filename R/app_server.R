@@ -379,7 +379,7 @@ app_server <- function(input, output, session) {
   })
   
   output$table_series <- DT::renderDT({
-    req(data$CaNSample,memory$Serie_desc)
+    req(nrow(memory$Serie_desc)>=1)
     data<- memory$Serie_desc
     DT::datatable(
       data,
