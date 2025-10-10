@@ -158,8 +158,6 @@ app_server <- function(input, output, session) {
     resolved <- data$Resolved_components #Resolved ecosystem components in the chosen variable
     comp_param <- data$CaNSample$CaNmod$components_param #Components from CaNSample to use for the network
     
-    
-    
     #Create the nodes of the foodweb network
     nodes <- info %>%
       mutate(
@@ -185,7 +183,7 @@ app_server <- function(input, output, session) {
     flux_def <- data$CaNSample$CaNmod$fluxes_def #fluxes represented in the model
     
     edges <- tibble(
-      id = paste0(flux_def$From, "_", flux_def$To),
+      id = flux_def$Flux,
       label = if (isTRUE(input$show_edge_labels)) paste0(flux_def$Flux) else "", #if "Show Flux Labels" ticked, show labels
       from = flux_def$From,
       to = flux_def$To,
@@ -194,7 +192,6 @@ app_server <- function(input, output, session) {
       hoverWidth = if (input$Typegraph == "Flux Series") 1 else 0, #if "Flux series" picked highlight edges when selected
       arrowStrikethrough = FALSE #Stop the arrorws at the point of the arrow
     )
-    
     #Create the network from the nodes and edges
     visNetwork::visNetwork(nodes, edges) |>
       visNetwork::visEdges(arrows = list(to = TRUE)) |> #Put arrows to show the direction of the fluxes
