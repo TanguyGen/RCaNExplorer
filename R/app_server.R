@@ -336,6 +336,69 @@ app_server <- function(input, output, session) {
     width * ceiling(num_plots / 3)
   }))
   
+  memory <- reactiveValues(
+    Serie_desc = data.frame(
+      Variable = character(),
+      Components = character(),
+      stringsAsFactors = FALSE
+    ),
+    Quantiles=data.frame()
+  )
+  
+  observe({
+    req(data$CaNSample, input$Typegraph, input$Typegraph!="Select an option...",input$selected_components, length(data$Resolved_components)>0)
+    
+    ecosystem_comp <- intersect(input$selected_components, data$Resolved_components)
+    new_row <- data.frame(
+      Variable = input$Typegraph,
+      Components = ecosystem_comp,
+      stringsAsFactors = FALSE
+    )
+    
+    
+    # If memory is empty
+    if (nrow(memory$Serie_desc) == 0) {
+      memory$Serie_desc <- new_row
+    } else {
+      # Keep only rows not already in memory
+      is_new <- !apply(new_row, 1, function(r) {
+        any(apply(memory$Serie_desc, 1, function(m) all(m == r)))
+      })
+      
+      if (any(is_new)) {
+        memory$Serie_desc <- rbind(memory$Serie_desc, new_row[is_new, ])
+      }
+    }
+  })
+  
+  output$table_series <- DT::renderDT({
+    req(nrow(memory$Serie_desc)>=1)
+    data<- memory$Serie_desc
+    DT::datatable(
+      data,
+      rownames = FALSE,
+      selection = list(mode = "multiple", selected = NULL, target = "row"),
+      options = list(pageLength = 15, scrollX = TRUE)
+    )
+  })
+  
+  
+  output$saveseries <- downloadHandler(
+    filename = paste0("RCaN_series", format(Sys.time(), "%d-%m-%Y"), ".csv"),
+    content = function(file) {
+      req(memory$Quantiles,input$table_series_rows_selected)
+      
+      data <- memory$Serie_desc
+      selected_rows <- input$table_series_rows_selected
+      selected_comp <- data[selected_rows, 2, drop = TRUE]
+      selected_var <- data[selected_rows, 1, drop = TRUE]
+      
+      Quantiles <- memory$Quantiles
+      write.csv(Quantiles,file, row.names = FALSE)
+    }
+  )
+  
+  
   # Render an editable Info Table 
   output$table_info <- DT::renderDT({
     DT::datatable(
