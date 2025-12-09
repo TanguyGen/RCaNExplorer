@@ -87,7 +87,7 @@ ConsumptionSeries <- function(Data,
   }
   
   # Create a list of plots for each unique series
-  listplot <- unique(Consumption_data$series) %>%
+  listres <- unique(Consumption_data$series) %>%
     purrr::map(function(.x) {
       # Calculate quantiles for the current series
       
@@ -107,6 +107,7 @@ ConsumptionSeries <- function(Data,
       
       # Remove the list column
       quantiles[, quantiles := NULL]
+      
       
 
       # Prepare average consumption data by prey species
@@ -131,13 +132,49 @@ ConsumptionSeries <- function(Data,
 
       # Combine the two plots using patchwork layout
       p <- p1 + p2
-      return(p)
+      
+      
+      
+      Q1 <- quantiles%>%
+        pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
+        mutate(
+          Var="Consuption",
+          Unit="1000t",
+          Prey=NA,
+          Pred=series
+        )%>%
+        select(Year,Var,Unit,Pred,Prey,Stat,Value)
+      
+      Q2 <- Consumption_data[
+        , as.list(quantile(value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1))),
+        by = .(Year, series, target)
+      ][
+        , melt(.SD,
+               id.vars = c("Year", "series","target"),
+               variable.name = "Stat",
+               value.name = "Value")
+      ][
+        , `:=`(
+          Var = "Consumption",
+          Unit = "1000t",
+          Prey = target,
+          Pred = series
+        )
+      ][
+        , .(Year, Var, Unit, Pred, Prey, Stat, Value)
+      ]
+      
+      Quantiles <- bind_rows(Q1,Q2)
+      
+      return(list(Plot=p,Quant=Quantiles))
     })
   
   
   # Adjust the title size based on plot width
   width <- session$clientData$output_Graphs_width
   bigtitle_size <- max(ceiling(width / 10), 30)
+  
+  listplot <- lapply(listres, `[[`, "Plot")
   
   # Combine all individual plots into a single plot with a title
   plot_result <- wrap_plots(listplot, ncol = 1) +
@@ -148,6 +185,8 @@ ConsumptionSeries <- function(Data,
       )
     )
   
+  quantiles_all <- rbindlist(lapply(listres, `[[`, "Quant"), use.names = TRUE, fill = TRUE)
+  
   # Return the final combined plot
-  return(plot_result)
+  return(list(Plot=plot_result,Quant=quantiles_all))
 }

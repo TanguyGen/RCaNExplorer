@@ -63,6 +63,7 @@ FluxSeries <- function(Data,
   
   Flux_data[, `:=`(series = stringr::str_wrap(paste0("From ", PreyName, " to ", PredatorName), width = 30))]
   
+  
   colours_vector <- c(
     "#5050ff", "#ce3d32", "#749b58", "#f0e685", "#466983", "#ba6338", "#5db1dd",
     "#802268", "#6bd76b", "#d595a7", "#924822", "#837b8d", "#c75127", "#d58f5c",
@@ -103,7 +104,7 @@ FluxSeries <- function(Data,
   
   # Calculate quantiles for the flux time series (0%, 2.5%, 25%, 50%, 75%, 97.5%, 100%)
   quantiles <- Flux_data %>%
-    group_by(Year, series, Colour) %>%
+    group_by(Year, series, Var,Colour) %>%
     summarise(quantiles = list(stats::quantile(value, c(
       0, 0.025, 0.25, 0.5, 0.75, 0.975, 1
     ))), .groups = "drop") %>%
@@ -129,5 +130,16 @@ FluxSeries <- function(Data,
     g<-g1
   }
   
-  return(g)
+  Quantiles <- quantiles%>%
+    pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
+    mutate(
+      ID=Var,
+      Var="Flux",
+      Unit="1000t"
+    )%>%
+      select(Year,Var,Unit,ID,Stat,Value)
+  
+  return(
+    list(Plot=g,Quant=Quantiles)
+    )
 }

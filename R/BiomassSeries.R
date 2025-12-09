@@ -52,7 +52,7 @@ BiomassSeries <- function(Data,
   
   Biomass_data <- merge(Biomass_data, info, by = "ID", all.x = TRUE)
   Biomass_data[, `:=`(series = FullName)]
-  Biomass_data[, c("FullName","ID") := NULL]
+  Biomass_data[, c("FullName") := NULL]
   
   # If grouping is enabled, summarize the data by year and sample ID
   if (group == TRUE & length(param)>1) {
@@ -66,10 +66,10 @@ BiomassSeries <- function(Data,
     Biomass_data$Colour = "#27548A"
     Biomass_data$series = grouplabel
   }
-  
+
   # Calculate quantiles (0%, 2.5%, 25%, 50%, 75%, 97.5%, and 100%) for biomass over time
   quantiles <- Biomass_data %>%
-    group_by(Year, series) %>%
+    group_by(Year, series, ID) %>%
     summarise(quantiles = list(stats::quantile(
       value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1)
     )),
@@ -100,6 +100,15 @@ BiomassSeries <- function(Data,
   }
   
   
-  # Return the generated plot
-  return(g)
+  Quantiles <- quantiles%>%
+    pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
+    mutate(
+      Var="Biomass",
+      Unit="1000t"
+    )%>%
+    select(Year,Var,Unit,ID,Stat,Value)
+  
+  return(
+    list(Plot=g,Quant=Quantiles)
+  )
 }

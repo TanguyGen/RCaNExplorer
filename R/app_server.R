@@ -40,6 +40,8 @@ app_server <- function(input, output, session) {
       data$Info = NULL
       data$Resolution = NULL
       data$Resolved_components = NULL
+      Positions$x=NULL
+      Positions$y=NULL
       if(is.CaNSample(obj)){ #Check that it is a CaNSample object
         data$CaNSample <- obj
         data$CaNSample_long <- transform_CaNSample(obj)
@@ -232,7 +234,7 @@ app_server <- function(input, output, session) {
   
   #Assign the initial positions to the ones from CaNSample
   observe({
-    req(data$CaNSample)
+    req(data$CaNSample,is.null(Positions$x),is.null(Positions$y))
     comp_param <- data$CaNSample$CaNmod$components_param
     
     # Ensure X and Y exist
@@ -293,15 +295,13 @@ app_server <- function(input, output, session) {
   
   # ---- Reactive Plot Generator ----
   plot_obj <- reactive({
-    req(input$Typegraph,  data$Resolution)
+    req(input$Typegraph,  data$Resolution, data$Info)
     
     Info_table <- data$Info %>% select(-Image, -Upload)
-    
     # Define resolved components
     resolved_components <- data$Resolved_components
     
     ecosystem_components <- intersect(input$selected_components, resolved_components)
-    
     
     # Handle empty selections
     validate(
@@ -324,9 +324,20 @@ app_server <- function(input, output, session) {
     )
   })
   
+  memory <- reactiveValues(
+    Serie_desc = data.frame(),
+    Quantiles=data.frame()
+  )
+  
+  observeEvent(plot_obj(), {
+    res <- plot_obj()
+    memory$Quantiles <- bind_rows(memory$Quantiles, res$Quant)
+  })
+  
   # Render Plot
   output$Plots <- renderPlot({
-    plot_obj()
+    res <- plot_obj()
+    res$Plot
   }, height = reactive({
     width <- session$clientData$output_Plots_width
     num_plots <- if (input$groupspecies) 1 else length(input$selected_components)
@@ -336,19 +347,14 @@ app_server <- function(input, output, session) {
     width * ceiling(num_plots / 3)
   }))
   
-  memory <- reactiveValues(
-    Serie_desc = data.frame(
-      Variable = character(),
-      Components = character(),
-      stringsAsFactors = FALSE
-    ),
-    Quantiles=data.frame()
-  )
-  
+
   observe({
     req(data$CaNSample, input$Typegraph, input$Typegraph!="Select an option...",input$selected_components, length(data$Resolved_components)>0)
     
     ecosystem_comp <- intersect(input$selected_components, data$Resolved_components)
+    
+    req(length(ecosystem_comp)>0)
+
     new_row <- data.frame(
       Variable = input$Typegraph,
       Components = ecosystem_comp,
@@ -408,7 +414,7 @@ app_server <- function(input, output, session) {
       selection = "none",
       escape = FALSE,
       options = list(
-        pageLength = 15,
+        pageLength = -1,
         columnDefs = list(list(
           targets = 2,
           render = htmlwidgets::JS(
