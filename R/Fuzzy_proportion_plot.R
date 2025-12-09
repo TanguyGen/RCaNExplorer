@@ -22,32 +22,61 @@ Fuzzy_proportion_plot <- function(Data, session) {
   # Function to estimate Beta distribution from data in a given Year
   # and build the fuzzy coverage bands
   make_bands <- function(df) {
-    # --- Estimate Beta(shape1 = a, shape2 = b) via method of moments ---
-    m   <- mean(df$F)
-    v   <- var(df$F)
     eps <- 1e-8
-    t   <- (m * (1 - m)) / max(v, eps) - 1
-    a   <- max(m * t, eps)             # avoid zero
-    b   <- max((1 - m) * t, eps)
+    m <- mean(df$F)
+    v <- var(df$F)
     
-    # --- Build vertical bins along y in [0, 1] ---
-    K  <- 1000                          # resolution (more bins = smoother gradient)
+    # --- Handle degenerate cases explicitly ---
+    if (m <= eps) {
+      # All F=0 → fully natural mortality
+      y  <- seq(0, 1, length.out = 1001)
+      y0 <- head(y, -1)
+      y1 <- tail(y, -1)
+      return(list(
+        bottom = tibble(y0, y1, prob = 0),   # no fishing mortality
+        top    = tibble(y0, y1, prob = 1),   # full natural mortality
+        mean_F = 0,
+        q05_95 = c(0, 0)
+      ))
+    }
+    
+    if (m >= 1 - eps) {
+      # All F=1 → fully fishing mortality
+      y  <- seq(0, 1, length.out = 1001)
+      y0 <- head(y, -1)
+      y1 <- tail(y, -1)
+      return(list(
+        bottom = tibble(y0, y1, prob = 1),   # full fishing mortality
+        top    = tibble(y0, y1, prob = 0),   # no natural mortality
+        mean_F = 1,
+        q05_95 = c(1, 1)
+      ))
+    }
+    
+    # --- Normal case: Beta estimation ---
+    denom <- max(v, eps)
+    num   <- max(m * (1 - m), eps)
+    t <- max(num / denom - 1, eps)
+    
+    a <- max(m * t, eps)
+    b <- max((1 - m) * t, eps)
+    
+    K  <- 1000
     y  <- seq(0, 1, length.out = K + 1)
-    y0 <- head(y, -1)                  # lower edge of bin
-    y1 <- tail(y, -1)                  # upper edge of bin
-    ym <- 0.5 * (y0 + y1)              # midpoint of bin
+    y0 <- head(y, -1)
+    y1 <- tail(y, -1)
+    ym <- 0.5 * (y0 + y1)
     
-    # --- Compute coverage probabilities from the Beta CDF ---
-    Fy <- pbeta(ym, a, b)              # P(F <= y)
+    Fy <- pbeta(ym, a, b)
     
-    # --- Return bottom and top coverage bands plus summary stats ---
     list(
-      bottom = tibble(y0, y1, prob = 1 - Fy),        # "F part" below
-      top    = tibble(y0, y1, prob = Fy),            # "M part" above
-      mean_F = a / (a + b),                          # mean of Beta
-      q05_95 = qbeta(c(0.05, 0.95), a, b)            # 5–95% interval
+      bottom = tibble(y0, y1, prob = 1 - Fy),
+      top    = tibble(y0, y1, prob = Fy),
+      mean_F = a / (a + b),
+      q05_95 = qbeta(c(0.05, 0.95), a, b)
     )
   }
+  
   
   # Apply to each Year separately
   bands_by_Year <- Data %>%
@@ -59,6 +88,7 @@ Fuzzy_proportion_plot <- function(Data, session) {
                      ~ mutate(.x$bottom, Year = .y))
   top    <- map2_dfr(bands_by_Year, unique(Data$Year),
                      ~ mutate(.x$top, Year = .y))
+  
   
   # --- Plot fuzzy bars per Year ---
   ggplot() +
