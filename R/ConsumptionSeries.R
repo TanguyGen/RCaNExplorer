@@ -57,6 +57,7 @@ ConsumptionSeries <- function(Data,
   
   # Join species info for Prey
   Consumption_data <- merge(Consumption_data, info, by = "ID", all.x = TRUE)
+
   Consumption_data[, `:=`(target = FullName,
                           Colour_target=Colour,
               ID = series  # Update ID to Predator ID for next join
@@ -83,7 +84,7 @@ ConsumptionSeries <- function(Data,
     # Add the grouped label information to the data
     Consumption_data$Colour = "#27548A"
     Consumption_data$series = grouplabel
-    
+    Consumption_data$ID = grouplabel
   }
   
   # Create a list of plots for each unique series
@@ -138,7 +139,7 @@ ConsumptionSeries <- function(Data,
       Q1 <- quantiles%>%
         pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
         mutate(
-          Var="Consuption",
+          Var="Consumption",
           Unit="1000t",
           Prey=NA,
           Pred=series

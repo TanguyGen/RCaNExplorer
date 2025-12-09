@@ -57,7 +57,7 @@ BiomassSeries <- function(Data,
   # If grouping is enabled, summarize the data by year and sample ID
   if (group == TRUE & length(param)>1) {
     
-    Series_prop <- Biomass_data[, .(value = mean(value)), by = .(Year, series, Colour)]
+    Series_prop <- Biomass_data[, .(value = mean(value)), by = .(Year, series, ID,Colour)]
     setnames(Series_prop, "series", "target")
     setnames(Series_prop, "Colour", "Colour_target")
     
@@ -65,6 +65,7 @@ BiomassSeries <- function(Data,
     
     Biomass_data$Colour = "#27548A"
     Biomass_data$series = grouplabel
+    Biomass_data$ID = grouplabel
   }
 
   # Calculate quantiles (0%, 2.5%, 25%, 50%, 75%, 97.5%, and 100%) for biomass over time
