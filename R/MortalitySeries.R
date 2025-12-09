@@ -25,7 +25,7 @@ MortalitySeries <- function(Data,
                             info,
                             group,
                             grouplabel,
-                            ylab="Mortality",
+                            ylab="Rate (y-1)",
                             facet = FALSE,
                             session) {
   
@@ -260,7 +260,7 @@ MortalitySeries <- function(Data,
     )
   
   # Return the final combined plot
-  return(plot_result)
+  return(list(Plot=plot_result))
 }
 
 

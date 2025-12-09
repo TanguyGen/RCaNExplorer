@@ -10,7 +10,7 @@ MortalitySeries(
   info,
   group,
   grouplabel,
-  ylab = "Mortality",
+  ylab = "Rate (y-1)",
   facet = FALSE,
   session
 )
