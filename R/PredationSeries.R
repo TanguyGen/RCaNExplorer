@@ -82,6 +82,7 @@ PredationSeries <- function(Data,
     # Add the grouped label information to the data
     Predation_data$Colour = "#27548A"
     Predation_data$series = grouplabel
+    Predation_data$ID = grouplabel
   }
   
   listplot <- unique(Predation_data$series) %>%
@@ -127,13 +128,48 @@ PredationSeries <- function(Data,
       
       # Combine the two plots using patchwork layout
       p <- p1 + p2
-      return(p)
+      
+      
+      Q1 <- quantiles%>%
+        pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
+        mutate(
+          Var="Consumption",
+          Unit="1000t",
+          Prey=series,
+          Pred=NA
+        )%>%
+        select(Year,Var,Unit,Pred,Prey,Stat,Value)
+      
+      Q2 <- Consumption_data[
+        , as.list(quantile(value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1))),
+        by = .(Year, series, target)
+      ][
+        , melt(.SD,
+               id.vars = c("Year", "series","target"),
+               variable.name = "Stat",
+               value.name = "Value")
+      ][
+        , `:=`(
+          Var = "Predation/Fishing",
+          Unit = "1000t",
+          Prey = series,
+          Pred = target
+        )
+      ][
+        , .(Year, Var, Unit, Pred, Prey, Stat, Value)
+      ]
+      
+      Quantiles <- bind_rows(Q1,Q2)
+      
+      return(list(Plot=p,Quant=Quantiles))
     })
   
   
   # Adjust the title size based on plot width
   width <- session$clientData$output_Graphs_width
   bigtitle_size <- max(ceiling(width / 10), 30)
+  
+  listplot <- lapply(listres, `[[`, "Plot")
   
   # Combine all individual plots into a single plot with a title
   plot_result <- wrap_plots(listplot, ncol = 1) +
@@ -144,6 +180,8 @@ PredationSeries <- function(Data,
       )
     )
   
+  quantiles_all <- rbindlist(lapply(listres, `[[`, "Quant"), use.names = TRUE, fill = TRUE)
+  
   # Return the final combined plot
-  return(plot_result)
+  return(list(Plot=plot_result,Quant=quantiles_all))
 }
