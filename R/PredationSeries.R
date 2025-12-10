@@ -85,23 +85,23 @@ PredationSeries <- function(Data,
     Predation_data$ID = grouplabel
   }
   
-  listplot <- unique(Predation_data$series) %>%
+  listres <- unique(Predation_data$series) %>%
     purrr::map(function(.x) {
       # Calculate quantiles for the current series
       
       Data_total <- Predation_data[series == .x,
                                      .(value = sum(value)),
-                                     by = .(Year, Sample_id, series, Colour)]
+                                     by = .(Year, Sample_id, series, ID,Colour)]
       
       # Calculate quantiles by Year and series
       quantiles <- Data_total[, .(
         quantiles = list(quantile(value, probs = c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1)))
-      ), by = .(Year, series)]
+      ), by = .(Year, series,ID)]
       
       # Expand quantiles into separate columns
       quantiles[, c("q0","q2.5","q25","q50","q75","q97.5","q100") :=
                   as.list(quantiles[[1]]), 
-                by = .(Year, series)]
+                by = .(Year, series,ID)]
       
       # Remove the list column
       quantiles[, quantiles := NULL]
@@ -110,7 +110,7 @@ PredationSeries <- function(Data,
       # Prepare average Predation data by prey species
       Data_byprey <- Predation_data %>%
         filter(series == .x) %>%
-        group_by(Year, target, series, Colour,Colour_target) %>%
+        group_by(Year, target, series,ID, Colour,Colour_target) %>%
         summarise(value = mean(value), .groups = "drop")
       
       # Create the quantile plot for total Predation
@@ -133,30 +133,34 @@ PredationSeries <- function(Data,
       Q1 <- quantiles%>%
         pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
         mutate(
-          Var="Consumption",
+          Var="Predation and Fisheries",
           Unit="1000t",
-          Prey=series,
-          Pred=NA
+          Predator="All predators"
         )%>%
-        select(Year,Var,Unit,Pred,Prey,Stat,Value)
+        select(Year,Var,Unit,ID,Predator,Stat,Value)
       
-      Q2 <- Consumption_data[
+      Q2 <- Predation_data[
         , as.list(quantile(value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1))),
-        by = .(Year, series, target)
+        by = .(Year, series, ID, target)
       ][
-        , melt(.SD,
-               id.vars = c("Year", "series","target"),
-               variable.name = "Stat",
-               value.name = "Value")
+        # Rename quantile columns
+        , setnames(.SD,
+                   old = c("0%", "2.5%", "25%", "50%", "75%", "97.5%", "100%"),
+                   new = c("q0","q2.5","q25","q50","q75","q97.5","q100"))
+      ][
+        , melt(
+          .SD,
+          id.vars = c("Year", "series", "ID", "target"),
+          variable.name = "Stat",
+          value.name = "Value")
       ][
         , `:=`(
-          Var = "Predation/Fishing",
+          Var = "Predation and Fisheries",
           Unit = "1000t",
-          Prey = series,
-          Pred = target
+          Predator = target
         )
       ][
-        , .(Year, Var, Unit, Pred, Prey, Stat, Value)
+        , .(Year, Var, Unit, ID, Predator, Stat, Value)
       ]
       
       Quantiles <- bind_rows(Q1,Q2)
@@ -174,7 +178,7 @@ PredationSeries <- function(Data,
   # Combine all individual plots into a single plot with a title
   plot_result <- wrap_plots(listplot, ncol = 1) +
     plot_annotation(
-      title = "Predation series",
+      title = "Predation and Fisheries",
       theme = theme(
         text = element_text(size = bigtitle_size)
       )
@@ -183,5 +187,6 @@ PredationSeries <- function(Data,
   quantiles_all <- rbindlist(lapply(listres, `[[`, "Quant"), use.names = TRUE, fill = TRUE)
   
   # Return the final combined plot
+  
   return(list(Plot=plot_result,Quant=quantiles_all))
 }

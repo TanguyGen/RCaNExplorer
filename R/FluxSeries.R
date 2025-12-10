@@ -24,7 +24,7 @@ FluxSeries <- function(Data,
                       plot_series = TRUE,
                       group,
                       grouplabel,
-                      ylab = "Flux (1000t)",
+                      ylab = "Fluxes (1000t)",
                       facet = TRUE,
                       session) {
   # Take consistent random samples for overlay
@@ -93,7 +93,8 @@ FluxSeries <- function(Data,
     
     Flux_data <- Flux_data[, .(value = sum(value)), by = .(Year, Sample_id)]
     Flux_data[, `:=`(series=grouplabel,
-                         Colour="#27548A"
+                         Colour="#27548A",
+                     Var=grouplabel
     )]
   }
   
@@ -134,7 +135,7 @@ FluxSeries <- function(Data,
     pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
     mutate(
       ID=Var,
-      Var="Flux",
+      Var="Fluxes",
       Unit="1000t"
     )%>%
       select(Year,Var,Unit,ID,Stat,Value)

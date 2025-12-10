@@ -49,7 +49,7 @@ RatioConsumptionBiomass <- function(Data,
   # Merge with info and clean
   Biomass <- merge(Biomass, info, by = "ID", all.x = TRUE)
   Biomass[, series := FullName]
-  Biomass[, c("FullName", "ID") := NULL]
+  Biomass[, c("FullName") := NULL]
   
   # Pattern to detect relevant consumption fluxes
   pattern <- paste0("_(", paste(param, collapse = "|"), ")$")
@@ -59,7 +59,8 @@ RatioConsumptionBiomass <- function(Data,
   Consumptions <- Data[grepl(pattern, Var),
                        .(
                          prey = tstrsplit(Var, "_")[[1]],
-                         ID = tstrsplit(Var, "_")[[2]],
+                         temp = tstrsplit(Var, "_")[[2]],
+                         ID=tstrsplit(Var, "_")[[2]],
                          Year = as.numeric(Year),
                          Sample_id,
                          value
@@ -68,18 +69,18 @@ RatioConsumptionBiomass <- function(Data,
   if (nrow(Consumptions) == 0) stop("param not recognized")
   
   # Merge with info and clean
-  Consumptions <- merge(Consumptions, info, by = "ID", all.x = TRUE)
+  Consumptions <- merge(Consumptions, info, by = c("temp"="ID"), all.x = TRUE)
   Consumptions[, series := FullName]
-  Consumptions[, c("FullName", "ID") := NULL]
+  Consumptions[, c("FullName","temp") := NULL]
   
   # Sum consumption by species, year, sample
   Consumptions <- Consumptions[, .(
     consumption = sum(value)
-  ), by = .(series, Year, Sample_id, Colour)]
+  ), by = .(series,ID, Year, Sample_id, Colour)]
   
   # Merge Biomass and Consumption
   merged_data <- merge(Biomass, Consumptions,
-                       by = c("series", "Year", "Sample_id", "Colour"),
+                       by = c("series", "ID","Year", "Sample_id", "Colour"),
                        all = TRUE)
   merged_data[is.na(merged_data)] <- 0
   merged_data <- merged_data[Year != max(Year)]  # Remove last year
@@ -92,19 +93,20 @@ RatioConsumptionBiomass <- function(Data,
     ), by = .(Year, Sample_id)]
     merged_data[, `:=`(
       series = grouplabel,
-      Colour = "#27548A"
+      Colour = "#27548A",
+      ID=grouplabel
     )]
-    setcolorder(merged_data, c("series", "biomass", "consumption", "Year", "Colour", "Sample_id"))
+    setcolorder(merged_data, c("series","ID", "biomass", "consumption", "Year", "Colour", "Sample_id"))
   }
   
   # Compute ratio
   merged_data[, value := consumption / biomass]
-  ratio_data <- merged_data[, .(series, value, Year, Sample_id, Colour)]
+  ratio_data <- merged_data[, .(series,ID, value, Year, Sample_id, Colour)]
   
   
   # Compute quantiles
   quantiles <- ratio_data[, as.list(quantile(value, probs = c(0, .025, .25, .5, .75, .975, 1))),
-                          by = .(Year, series, Colour)]
+                          by = .(Year, series,ID, Colour)]
   setnames(quantiles,
            old = c("0%", "2.5%", "25%", "50%", "75%", "97.5%", "100%"),
            new = c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100"))
@@ -119,5 +121,16 @@ RatioConsumptionBiomass <- function(Data,
     session = session
   )
   
-  return(g)
+  Quantiles <- quantiles%>%
+    pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
+    mutate(
+      Var="Ratio Consumption/Biomass",
+      Unit="Unitless"
+    )%>%
+    select(Year,Var,Unit,ID,Stat,Value)
+  
+  
+  return(
+    list(Plot=g,Quant=Quantiles)
+  )
 }

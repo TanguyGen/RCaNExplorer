@@ -32,9 +32,6 @@ MortalitySeries <- function(Data,
   # Select 3 random sample lines for consistent overlay in the plot
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
-  #standardise names
-  Data <- Data %>%
-    rename(Sample_id = Sample_id, Year = Year, Var = Var)
   
   # Convert Data to data.table for fast computing
   setDT(Data)
@@ -53,36 +50,38 @@ MortalitySeries <- function(Data,
   Biomass <- merge(Biomass, info, by = "ID", all.x = TRUE)
   Biomass[, `:=`(series = FullName)]
   
-  Biomass[, c("FullName", "ID") := NULL]
+  Biomass[, c("FullName") := NULL]
   
 
   #  Create the patterns of interest <Prey>_<Predator>
   pattern <- paste0("^(", paste(param, collapse = "|"), ")_") 
   
+  
   Flow <- Data[grepl(pattern, Var), # Use grepl for faster pattern matching
-                        .(ID = tstrsplit(Var, "_")[[2]], # Extract the predator
+                        .(temp = tstrsplit(Var, "_")[[2]], # Extract the predator
                           series = tstrsplit(Var, "_")[[1]], # Extract the series (prey)
+                          ID=tstrsplit(Var, "_")[[1]],
                           Year=Year,
                           Sample_id=Sample_id,
                           value=value
                         )]
   Flow[, Year := as.numeric(Year)]
-  
   # Join species info for Prey
-  Flow <- merge(Flow, info, by = "ID", all.x = TRUE)
+  Flow <- merge(Flow, info, by = c("temp"="ID"), all.x = TRUE)
   Flow[, `:=`(predator = FullName,
-              PredatorID=ID,
-              ID = series  # Update ID to Predator ID for next join
+              PredatorID=temp,
+              temp = series  # Update ID to Predator ID for next join
   )]
   
   # Drop unused columns before next merge
   Flow[, c("FullName", "Colour") := NULL]
   
   # Join species info for Predator
-  Flow <- merge(Flow, info, by = "ID", all.x = TRUE)
+  Flow <- merge(Flow, info, by = c("temp"="ID"), all.x = TRUE)
   # Final assignments
   Flow[, `:=`(series = FullName)]
   Flow[, c("FullName") := NULL]
+
   
   if (group == TRUE & length(param)>1) {
     
@@ -95,71 +94,74 @@ MortalitySeries <- function(Data,
     
     Biomass$series = grouplabel
     Flow$series = grouplabel
+    
+    Biomass$ID = grouplabel
+    Flow$ID = grouplabel
 
   }
   
   #Biomass at the beginning of Year y+1
   Biomasst1 <- Biomass[
-    , .(series, Sample_id, Year, biomass, Colour)
+    , .(series, ID,Sample_id, Year, biomass, Colour)
   ][
-    , .(series, Sample_id, Year = Year - 1, biomasst1 = biomass, Colour)
+    , .(series,ID, Sample_id, Year = Year - 1, biomasst1 = biomass, Colour)
   ][
-    Biomass, on = c("series", "Sample_id", "Year","Colour"), nomatch = 0
+    Biomass, on = c("series","ID", "Sample_id", "Year","Colour"), nomatch = 0
   ][
-    , .(series, Sample_id, Year, biomasst1, Colour)
+    , .(series, ID,Sample_id, Year, biomasst1, Colour)
   ]
   
   Biomass <- Biomass[
     , .SD[Year < max(Year)], 
-    by = .(series, Sample_id)
+    by = .(series,ID, Sample_id)
   ]
   
   # Separate flows into catches and predation
   Catches <- Flow[
     startsWith(PredatorID, "F"),
     .(C = sum(value, na.rm = TRUE)),
-    by = .(Year, Sample_id, series, Colour)
+    by = .(Year, Sample_id, series,ID, Colour)
   ][, C := fifelse(is.na(C), 0, C)]
 
   Predation <- Flow[
     !startsWith(PredatorID, "F"),
     .(P = sum(value, na.rm = TRUE)),
-    by = .(Year, Sample_id, series, Colour)
+    by = .(Year, Sample_id, series,ID, Colour)
   ][, P := fifelse(is.na(P), 0, P)]
   
 
-  Mortalities <- merge(Biomass, Biomasst1, by = c("Year", "Sample_id", "series","Colour"), all.x = TRUE) # Join the total catch
-  Mortalities <- merge(Mortalities, Catches, by = c("Year", "Sample_id", "series","Colour"), all.x = TRUE) # Join the total catch
-  Mortalities <- merge(Mortalities, Predation , by = c("Year", "Sample_id", "series","Colour"), all.x = TRUE) # Join the total predation
+  Mortalities <- merge(Biomass, Biomasst1, by = c("Year", "Sample_id", "series","ID","Colour"), all.x = TRUE) # Join the total catch
+  Mortalities <- merge(Mortalities, Catches, by = c("Year", "Sample_id", "series","ID","Colour"), all.x = TRUE) # Join the total catch
+  Mortalities <- merge(Mortalities, Predation , by = c("Year", "Sample_id", "series","ID","Colour"), all.x = TRUE) # Join the total predation
   Mortalities[, `:=`(B = biomass, B.t1 = biomasst1)]
   
 
   Mortalities[, `:=`(
     Z = -log(B.t1 / (B.t1 + C + P))
-  ), by = .(series, Sample_id)]
+  ), by = .(series,ID, Sample_id)]
   
   Mortalities[, `:=`(
     F = (C / (C + P)) * Z,
     M = (P / (C + P)) * Z,
     G = log((B.t1 + C + P) / B)
-  ), by = .(series, Sample_id)]
+  ), by = .(series, ID,Sample_id)]
   
-  Mortalities <- Mortalities[, .SD, .SDcols = c("Year", "Sample_id", "Colour","series","Z","F","M","G")]
+  Mortalities <- Mortalities[, .SD, .SDcols = c("Year", "Sample_id", "Colour","ID","series","Z","F","M","G")]
   
   # Create a list of plots for each unique series
-  listplot <- unique(Mortalities$series) %>%
+  listres <- unique(Mortalities$series) %>%
     purrr::map(function(.x) {
       
       mortal <- Mortalities[series == .x, 
                             .(Mortality = rep(c("Z", "F", "M", "G"), each = .N),
                               value = c(Z, F, M, G)),
-                            by = .(Year, series, Colour,Sample_id)]
+                            by = .(Year, series, ID,Colour,Sample_id)]
       quantiles<-mortal
       # Calculate quantiles by group with na.rm = TRUE to avoid errors
       quantiles<-quantiles[, {
         q <- stats::quantile(value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1), na.rm = TRUE)
         .(q0 = q[1], q2.5 = q[2], q25 = q[3], q50 = q[4], q75 = q[5], q97.5 = q[6], q100 = q[7])
-      }, by = .(Year, series, Colour, Mortality)]
+      }, by = .(Year, series,ID, Colour, Mortality)]
       
       Z_quantiles <- quantiles[Mortality == "Z"][, Mortality := NULL]
 
@@ -242,25 +244,57 @@ MortalitySeries <- function(Data,
       
       # Combine the two plots using patchwork layout
       p <- (p1 + p2 + p3)/(p4 + p5)
-  
-      return(p)
+      
+      Z_quantiles <- Z_quantiles%>%
+        mutate(
+        Metric="Total Mortality"
+      )
+      
+      F_quantiles <- F_quantiles%>%
+        mutate(
+          Metric="Fishing Mortality"
+        )
+      
+      M_quantiles <- M_quantiles%>%
+        mutate(
+          Metric="Natural Mortality"
+        )
+      G_quantiles <- G_quantiles%>%
+        mutate(
+          Metric="Growth"
+        )
+      
+      
+      Quantiles <- bind_rows(Z_quantiles,F_quantiles,M_quantiles,G_quantiles)%>%
+        pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
+        mutate(Unit="Rate (y-1)",
+               Var="Mortality and Growth")%>%
+        select(Year,Var,Metric,Unit,ID,Stat,Value)
+      
+      
+      
+      return(list(Plot=p,Quant=Quantiles))
     })
   
   width <- session$clientData$output_Graphs_width
   # Adjust the title size based on plot width
   bigtitle_size <- max(ceiling(width / 10), 30)
   
+  listplot <- lapply(listres, `[[`, "Plot")
+  
   # Combine all individual plots into a single plot with a title
   plot_result <- wrap_plots(listplot, ncol = 1) +
     plot_annotation(
-      title = "Mortality series",
+      title = "Mortality",
       theme = theme(
         text = element_text(size = bigtitle_size)
       )
     )
   
+  quantiles_all <- rbindlist(lapply(listres, `[[`, "Quant"), use.names = TRUE, fill = TRUE)
+  
   # Return the final combined plot
-  return(list(Plot=plot_result))
+  return(list(Plot=plot_result,Quant=quantiles_all))
 }
 
 

@@ -47,13 +47,14 @@ RatioProductionBiomass <- function(Data,
   )]
   Biomass <- merge(Biomass, info, by = "ID", all.x = TRUE)
   Biomass[, series := FullName]
-  Biomass[, c("FullName", "ID") := NULL]
+  Biomass[, c("FullName") := NULL]
   
   # --- Production Extraction ---
   pattern <- paste0("^(", paste(param, collapse = "|"), ")_")
   Productions <- Data[grepl(pattern, Var), .(
-    ID = tstrsplit(Var, "_")[[1]],
+    temp = tstrsplit(Var, "_")[[1]],
     Predator = tstrsplit(Var, "_")[[2]],
+    ID=tstrsplit(Var, "_")[[1]],
     value = value,
     Year = as.numeric(Year),
     Sample_id
@@ -61,17 +62,17 @@ RatioProductionBiomass <- function(Data,
   
   if (nrow(Productions) == 0) stop("param not recognized")
   
-  Productions <- merge(Productions, info, by = "ID", all.x = TRUE)
+  Productions <- merge(Productions, info, by = c("temp"="ID"), all.x = TRUE)
   Productions[, series := FullName]
-  Productions[, c("FullName", "ID") := NULL]
+  Productions[, c("FullName", "temp") := NULL]
   
   Productions <- Productions[, .(
     production = sum(value)
-  ), by = .(series, Year, Sample_id, Colour)]
+  ), by = .(series,ID, Year, Sample_id, Colour)]
   
   # --- Merge Biomass and Production ---
   merged_data <- merge(Biomass, Productions,
-                       by = c("series", "Year", "Sample_id", "Colour"),
+                       by = c("series","ID", "Year", "Sample_id", "Colour"),
                        all = TRUE)
   merged_data[is.na(merged_data)] <- 0
   merged_data <- merged_data[Year != max(Year)]
@@ -84,18 +85,19 @@ RatioProductionBiomass <- function(Data,
     ), by = .(Year, Sample_id)]
     merged_data[, `:=`(
       series = grouplabel,
-      Colour = "#27548A"
+      Colour = "#27548A",
+      ID=grouplabel
     )]
-    setcolorder(merged_data, c("series", "biomass", "production", "Year", "Colour", "Sample_id"))
+    setcolorder(merged_data, c("series","ID", "biomass", "production", "Year", "Colour", "Sample_id"))
   }
   
   # --- Compute Ratio ---
   merged_data[, value := production / biomass]
-  ratio_data <- merged_data[, .(series, value, Year, Sample_id, Colour)]
+  ratio_data <- merged_data[, .(series,ID, value, Year, Sample_id, Colour)]
   
   # --- Quantile Calculation ---
   quantiles <- ratio_data[, as.list(quantile(value, probs = c(0, .025, .25, .5, .75, .975, 1))),
-                          by = .(Year, series, Colour)]
+                          by = .(Year, series,ID, Colour)]
   setnames(quantiles,
            old = c("0%", "2.5%", "25%", "50%", "75%", "97.5%", "100%"),
            new = c("q0", "q2.5", "q25", "q50", "q75", "q97.5", "q100"))
@@ -110,5 +112,16 @@ RatioProductionBiomass <- function(Data,
     session = session
   )
   
-  return(g)
+  Quantiles <- quantiles%>%
+    pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
+    mutate(
+      Var="Ratio Production/Biomass",
+      Unit="Unitless"
+    )%>%
+    select(Year,Var,Unit,ID,Stat,Value)
+  
+  
+  return(
+    list(Plot=g,Quant=Quantiles)
+  )
 }

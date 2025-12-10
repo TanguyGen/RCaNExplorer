@@ -94,17 +94,17 @@ ConsumptionSeries <- function(Data,
       
       Data_total <- Consumption_data[series == .x,
                                      .(value = sum(value)),
-                                     by = .(Year, Sample_id, series, Colour)]
+                                     by = .(Year, Sample_id,ID, series, Colour)]
       
       # Calculate quantiles by Year and series
       quantiles <- Data_total[, .(
         quantiles = list(quantile(value, probs = c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1)))
-      ), by = .(Year, series)]
+      ), by = .(Year, series,ID)]
       
       # Expand quantiles into separate columns
       quantiles[, c("q0","q2.5","q25","q50","q75","q97.5","q100") :=
                   as.list(quantiles[[1]]), 
-                by = .(Year, series)]
+                by = .(Year, series,ID)]
       
       # Remove the list column
       quantiles[, quantiles := NULL]
@@ -114,7 +114,7 @@ ConsumptionSeries <- function(Data,
       # Prepare average consumption data by prey species
       Data_byprey <- Consumption_data %>%
         filter(series == .x) %>%
-        group_by(Year, target, series, Colour,Colour_target) %>%
+        group_by(Year, target, series,ID, Colour,Colour_target) %>%
         summarise(value = mean(value), .groups = "drop")
       
 
@@ -135,37 +135,41 @@ ConsumptionSeries <- function(Data,
       p <- p1 + p2
       
       
-      
       Q1 <- quantiles%>%
         pivot_longer(cols = starts_with("q"), names_to = "Stat",values_to = "Value")%>%
         mutate(
           Var="Consumption",
           Unit="1000t",
-          Prey=NA,
-          Pred=series
+          Prey="All prey"
         )%>%
-        select(Year,Var,Unit,Pred,Prey,Stat,Value)
+        select(Year,Var,Unit,ID,Prey,Stat,Value)
+      
       
       Q2 <- Consumption_data[
         , as.list(quantile(value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1))),
-        by = .(Year, series, target)
+        by = .(Year, series, ID, target)
       ][
-        , melt(.SD,
-               id.vars = c("Year", "series","target"),
-               variable.name = "Stat",
-               value.name = "Value")
+        # Rename quantile columns
+        , setnames(.SD,
+                   old = c("0%", "2.5%", "25%", "50%", "75%", "97.5%", "100%"),
+                   new = c("q0","q2.5","q25","q50","q75","q97.5","q100"))
+      ][
+        , melt(
+          .SD,
+          id.vars = c("Year", "series", "ID", "target"),
+          variable.name = "Stat",
+          value.name = "Value")
       ][
         , `:=`(
           Var = "Consumption",
           Unit = "1000t",
-          Prey = target,
-          Pred = series
+          Prey = target
         )
       ][
-        , .(Year, Var, Unit, Pred, Prey, Stat, Value)
+        , .(Year, Var, Unit, ID, Prey, Stat, Value)
       ]
-      
       Quantiles <- bind_rows(Q1,Q2)
+      
       
       return(list(Plot=p,Quant=Quantiles))
     })
@@ -180,7 +184,7 @@ ConsumptionSeries <- function(Data,
   # Combine all individual plots into a single plot with a title
   plot_result <- wrap_plots(listplot, ncol = 1) +
     plot_annotation(
-      title = "Consumption series",
+      title = "Consumption",
       theme = theme(
         text = element_text(size = bigtitle_size)
       )

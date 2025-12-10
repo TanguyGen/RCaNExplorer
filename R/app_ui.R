@@ -63,13 +63,13 @@ app_ui <- function(request) {
               "Typegraph",
               "Choose a variable",
               c("Select an option...",
-                "Biomass Series",
-                "Consumption Series",
-                "Predation and Catch Series",
+                "Biomass",
+                "Consumption",
+                "Predation and Fisheries",
                 "Ratio Consumption/Biomass",
                 "Ratio Production/Biomass",
-                "Mortality Series",
-                "Flux Series")
+                "Mortality and Growth",
+                "Fluxes")
             ),
             data.step = 2,
             data.intro = "Select here the variable you want to visualise."),

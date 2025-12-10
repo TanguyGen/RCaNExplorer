@@ -11,7 +11,7 @@ FluxSeries(
   plot_series = TRUE,
   group,
   grouplabel,
-  ylab = "Flux (1000t)",
+  ylab = "Fluxes (1000t)",
   facet = TRUE,
   session
 )

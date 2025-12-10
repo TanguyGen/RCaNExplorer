@@ -89,12 +89,12 @@ app_server <- function(input, output, session) {
     
     data$Resolved_components <- data$Resolution |>
       filter(
-        (type == "Biomass Series" & IsBiomass) |
-          (type == "Consumption Series" & IsConsumer) |
-          (type == "Predation and Catch Series" & IsPredatedCatched) |
+        (type == "Biomass" & IsBiomass) |
+          (type == "Consumption" & IsConsumer) |
+          (type == "Predation and Fisheries" & IsPredatedCatched) |
           (type == "Ratio Consumption/Biomass" & IsConsumer & IsBiomass) |
           (type == "Ratio Production/Biomass" & IsPredatedCatched & IsBiomass) |
-          (type == "Mortality Series" & IsBiomass & IsPredatedCatched & IsConsumer & !IsCatchedOnly & !IsPredatedOnly) 
+          (type == "Mortality and Growth" & IsBiomass & IsPredatedCatched & IsConsumer & !IsCatchedOnly & !IsPredatedOnly) 
       ) |>
       pull(Component)
   })
@@ -189,9 +189,9 @@ app_server <- function(input, output, session) {
       label = if (isTRUE(input$show_edge_labels)) paste0(flux_def$Flux) else "", #if "Show Flux Labels" ticked, show labels
       from = flux_def$From,
       to = flux_def$To,
-      color = list(highlight=if_else(input$Typegraph == "Flux Series","black","grey")), #if "Flux series" picked highlight edges when selected
-      selectionWidth = if (input$Typegraph == "Flux Series") 1 else 0, #if "Flux series" picked highlight edges when selected
-      hoverWidth = if (input$Typegraph == "Flux Series") 1 else 0, #if "Flux series" picked highlight edges when selected
+      color = list(highlight=if_else(input$Typegraph == "Fluxes","black","grey")), #if "Fluxes" picked highlight edges when selected
+      selectionWidth = if (input$Typegraph == "Fluxes") 1 else 0, #if "Fluxes" picked highlight edges when selected
+      hoverWidth = if (input$Typegraph == "Fluxes") 1 else 0, #if "Fluxes" picked highlight edges when selected
       arrowStrikethrough = FALSE #Stop the arrorws at the point of the arrow
     )
     #Create the network from the nodes and edges
@@ -258,7 +258,7 @@ app_server <- function(input, output, session) {
   observeEvent(input$continue, {
     req(input$Typegraph, input$selected_components)
     
-    if(input$Typegraph=="Flux Series"){
+    if(input$Typegraph=="Fluxes"){
       data$Resolved_components<-paste0(data$CaNSample$CaNmod$fluxes_def$From,"_",data$CaNSample$CaNmod$fluxes_def$To)
     }
     valid_selected <- intersect(input$selected_components, data$Resolved_components)
@@ -284,13 +284,13 @@ app_server <- function(input, output, session) {
   
   # Choice of variable to plot function 
   plot_dispatch <- list(
-    "Biomass Series"             = BiomassSeries,
-    "Consumption Series"         = ConsumptionSeries,
-    "Predation and Catch Series" = PredationSeries,
-    "Flux Series"                = FluxSeries,
+    "Biomass"             = BiomassSeries,
+    "Consumption"         = ConsumptionSeries,
+    "Predation and Fisheries" = PredationSeries,
+    "Fluxes"                = FluxSeries,
     "Ratio Consumption/Biomass"  = RatioConsumptionBiomass,
     "Ratio Production/Biomass"   = RatioProductionBiomass,
-    "Mortality Series"           = MortalitySeries
+    "Mortality and Growth"           = MortalitySeries
   )
   
   # ---- Reactive Plot Generator ----
@@ -326,12 +326,18 @@ app_server <- function(input, output, session) {
   
   memory <- reactiveValues(
     Serie_desc = data.frame(),
-    Quantiles=data.frame()
+    Quantiles=list()
   )
   
   observeEvent(plot_obj(), {
     res <- plot_obj()
-    memory$Quantiles <- bind_rows(memory$Quantiles, res$Quant)
+    
+    var <- unique(res$Quant$Var)
+    
+    for (id in unique(res$Quant$ID)) {
+      key <- paste(var, id, sep = "-")
+      memory$Quantiles[[key]] <- res$Quant[res$Quant$ID == id, ]
+    }
   })
   
   # Render Plot
@@ -343,7 +349,7 @@ app_server <- function(input, output, session) {
     num_plots <- if (input$groupspecies) 1 else length(input$selected_components)
     if (is.null(width) || num_plots == 0) return(400)
     if (num_plots == 1) return(800)
-    if(input$Typegraph=="Mortality Series") return(width * ceiling(num_plots / 1.5))
+    if(input$Typegraph=="Mortality and Growth") return(width * ceiling(num_plots / 1.5))
     width * ceiling(num_plots / 3)
   }))
   
@@ -354,9 +360,11 @@ app_server <- function(input, output, session) {
     ecosystem_comp <- intersect(input$selected_components, data$Resolved_components)
     
     req(length(ecosystem_comp)>0)
+    
+    var <- input$Typegraph
 
     new_row <- data.frame(
-      Variable = input$Typegraph,
+      Variable = var,
       Components = ecosystem_comp,
       stringsAsFactors = FALSE
     )
@@ -390,17 +398,54 @@ app_server <- function(input, output, session) {
   
   
   output$saveseries <- downloadHandler(
-    filename = paste0("RCaN_series", format(Sys.time(), "%d-%m-%Y"), ".csv"),
+    filename = function() {
+      paste0("RCaN_series_", format(Sys.time(), "%d-%m-%Y"), ".zip")
+    },
+    
     content = function(file) {
-      req(memory$Quantiles,input$table_series_rows_selected)
+      req(memory$Quantiles, input$table_series_rows_selected)
+      tmpdir <- tempdir()
+      file_list <- c()
       
       data <- memory$Serie_desc
       selected_rows <- input$table_series_rows_selected
-      selected_comp <- data[selected_rows, 2, drop = TRUE]
-      selected_var <- data[selected_rows, 1, drop = TRUE]
       
-      Quantiles <- memory$Quantiles
-      write.csv(Quantiles,file, row.names = FALSE)
+      # ---- NEW: group selected rows by variable ----
+      var_groups <- split(selected_rows, data$Variable[selected_rows])
+      
+      # Loop over each variable
+      for (var in names(var_groups)) {
+        
+        rows_for_var <- var_groups[[var]]
+        merged <- NULL
+        
+        # Merge all quantile tables for this variable
+        for (i in rows_for_var) {
+          comp <- data$Components[i]
+          
+          key <- paste(var, comp, sep = "-")
+          Quant_sub <- memory$Quantiles[[key]]
+          
+          if (is.null(Quant_sub)) next
+          
+          
+          # Accumulate rows
+          merged <- rbind(merged, Quant_sub)
+        }
+        
+        # Skip empty merges
+        if (is.null(merged)) next
+        
+        # Build filename for this variable
+        csv_name <- paste0(gsub("[^A-Za-z0-9]", "_", var), ".csv")
+        csv_path <- file.path(tmpdir, csv_name)
+        
+        write.csv(merged, csv_path, row.names = FALSE)
+        file_list <- c(file_list, csv_path)
+      }
+      
+      # Create ZIP
+      zip::zipr(zipfile = file, files = file_list)
     }
   )
   
