@@ -24,5 +24,5 @@ transform_CaNSample <- function(obj) {
     dplyr::mutate(
       Var = ifelse(!is.na(FluxName), FluxName, Var)
     ) |>
-    dplyr::select(Sample_id, Var, Year, value)
+    dplyr::select(Sample_id, Var, Year, value,Trophic)
 }

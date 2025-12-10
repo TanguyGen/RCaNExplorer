@@ -31,11 +31,14 @@ ConsumptionSeries <- function(Data,
                               ylab = "Consumption (1000t)",
                               facet = FALSE,
                               session) {
-  # Select a few sample lines for overlay in the plot
-  selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
+
   
   # Transform to data.table for faster computing
-  Data <- data.table::as.data.table(Data)
+  Data <- data.table::as.data.table(Data)%>%
+    filter(Trophic==1)
+  
+  # Select a few sample lines for overlay in the plot
+  selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
   #  Create the patterns of interest <Prey>_<Targeted species>
   pattern <- paste0("_(", paste(param, collapse = "|"), ")$")
