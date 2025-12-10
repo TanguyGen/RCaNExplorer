@@ -353,6 +353,22 @@ app_server <- function(input, output, session) {
     width * ceiling(num_plots / 3)
   }))
   
+  output$savePlot <- downloadHandler(
+    filename = function() {
+      paste0("plot_", Sys.Date(), ".svg")
+    },
+    content = function(file) {
+      res <- plot_obj()  # same as in renderPlot
+      ggsave(
+        filename = file,
+        plot = res$Plot,    # your ggplot object
+        device = "svg",
+        width = 10,         # in inches
+        height = 8
+      )
+    }
+  )
+  
 
   observe({
     req(data$CaNSample, input$Typegraph, input$Typegraph!="Select an option...",input$selected_components, length(data$Resolved_components)>0)

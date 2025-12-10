@@ -111,6 +111,7 @@ app_ui <- function(request) {
               "Plots",
               br(),
               introBox(
+              downloadButton("savePlot", "Download Plot"), 
               plotOutput("Plots", height = "auto") %>% shinycssloaders::withSpinner(type = 6),
               data.step = 5,
               data.intro = "The plots will appear on this pannel. You will be automatically redirected here when clicking on the  'Continue' button."
