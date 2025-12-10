@@ -29,6 +29,8 @@ MortalitySeries <- function(Data,
                             facet = FALSE,
                             session) {
   
+  # Select 3 random sample lines for consistent overlay in the plot
+  selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
   
   # Convert Data to data.table for fast computing
@@ -54,12 +56,6 @@ MortalitySeries <- function(Data,
   #  Create the patterns of interest <Prey>_<Predator>
   pattern <- paste0("^(", paste(param, collapse = "|"), ")_") 
   
-  # Transform to data.table for faster computing
-  Data <- data.table::as.data.table(Data)%>%
-    filter(Trophic==1)
-  
-  # Select a few sample lines for overlay in the plot
-  selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
   Flow <- Data[grepl(pattern, Var), # Use grepl for faster pattern matching
                         .(temp = tstrsplit(Var, "_")[[2]], # Extract the predator

@@ -18,7 +18,6 @@ Fuzzy_proportion_plot <- function(Data, session) {
   axistitle_size <- max(ceiling(width / 60), 12)  # Adjust axis title size
   text_size <- max(ceiling(width / 80), 12)  # Adjust axis text size
 
-  
   # Function to estimate Beta distribution from data in a given Year
   # and build the fuzzy coverage bands
   make_bands <- function(df) {

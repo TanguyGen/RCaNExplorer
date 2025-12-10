@@ -32,12 +32,11 @@ RatioConsumptionBiomass <- function(Data,
                                     ylab = "Unitless",
                                     facet = TRUE,
                                     session) {
-  # Transform to data.table for faster computing
-  Data <- data.table::as.data.table(Data)%>%
-    filter(Trophic==1)
-  
-  # Select a few sample lines for overlay in the plot
+  # Take random samples for example trajectories
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
+  
+  # Convert to data.table if not already
+  Data <- data.table::as.data.table(Data)
 
   # Extract Biomass
   Biomass <- Data[Var %in% param, .(
