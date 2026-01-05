@@ -41,7 +41,9 @@ RatioProductionBiomass <- function(Data,
   Data <- Data %>%
     filter(
       (Trophic == 1) |
-        grepl("^[^_]+_[Ff]", Var)
+        grepl("^[^_]+_[Ff]", Var)  |
+        (!grepl("_", Var))
+      
     )
   
   # --- Biomass Extraction ---
