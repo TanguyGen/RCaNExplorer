@@ -37,6 +37,12 @@ PredationSeries <- function(Data,
   # Transform to data.table for faster computing
   Data <- data.table::as.data.table(Data)
   
+  Data <- Data %>%
+    filter(
+      (Trophic == 1) |
+        grepl("^[^_]+_[Ff]", Var)
+    )
+  
   #  Create the patterns of interest <Prey>_<Targeted species>
   pattern <- paste0("^(", paste(param, collapse = "|"), ")_") #Get the patterns of interest <Targeted species>_<Predator>
   

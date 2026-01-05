@@ -37,6 +37,12 @@ RatioConsumptionBiomass <- function(Data,
   
   # Convert to data.table if not already
   Data <- data.table::as.data.table(Data)
+  
+  Data <- Data %>%
+    filter(
+      (Trophic == 1) |
+        grepl("^[^_]+_[Ff]", Var)
+    )
 
   # Extract Biomass
   Biomass <- Data[Var %in% param, .(

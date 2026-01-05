@@ -32,6 +32,13 @@ MortalitySeries <- function(Data,
   # Select 3 random sample lines for consistent overlay in the plot
   selectedsamples <- sample(1:max(Data$Sample_id), size = 3)
   
+  Data <- Data %>%
+    filter(
+      (Trophic == 1) |
+        grepl("^[^_]+_[Ff]", Var)  |
+        (!grepl("_", Var))
+        
+    )
   
   # Convert Data to data.table for fast computing
   setDT(Data)
@@ -122,6 +129,7 @@ MortalitySeries <- function(Data,
     .(C = sum(value, na.rm = TRUE)),
     by = .(Year, Sample_id, series,ID, Colour)
   ][, C := fifelse(is.na(C), 0, C)]
+  
 
   Predation <- Flow[
     !startsWith(PredatorID, "F"),
@@ -129,11 +137,13 @@ MortalitySeries <- function(Data,
     by = .(Year, Sample_id, series,ID, Colour)
   ][, P := fifelse(is.na(P), 0, P)]
   
+  
 
   Mortalities <- merge(Biomass, Biomasst1, by = c("Year", "Sample_id", "series","ID","Colour"), all.x = TRUE) # Join the total catch
   Mortalities <- merge(Mortalities, Catches, by = c("Year", "Sample_id", "series","ID","Colour"), all.x = TRUE) # Join the total catch
   Mortalities <- merge(Mortalities, Predation , by = c("Year", "Sample_id", "series","ID","Colour"), all.x = TRUE) # Join the total predation
   Mortalities[, `:=`(B = biomass, B.t1 = biomasst1)]
+  
   
 
   Mortalities[, `:=`(
@@ -146,7 +156,9 @@ MortalitySeries <- function(Data,
     G = log((B.t1 + C + P) / B)
   ), by = .(series, ID,Sample_id)]
   
+  
   Mortalities <- Mortalities[, .SD, .SDcols = c("Year", "Sample_id", "Colour","ID","series","Z","F","M","G")]
+  
   
   # Create a list of plots for each unique series
   listres <- unique(Mortalities$series) %>%
@@ -158,6 +170,8 @@ MortalitySeries <- function(Data,
                             by = .(Year, series, ID,Colour,Sample_id)]
       quantiles<-mortal
       # Calculate quantiles by group with na.rm = TRUE to avoid errors
+      
+      
       quantiles<-quantiles[, {
         q <- stats::quantile(value, c(0, 0.025, 0.25, 0.5, 0.75, 0.975, 1), na.rm = TRUE)
         .(q0 = q[1], q2.5 = q[2], q25 = q[3], q50 = q[4], q75 = q[5], q97.5 = q[6], q100 = q[7])

@@ -38,6 +38,12 @@ RatioProductionBiomass <- function(Data,
   # Ensure Data is a data.table
   Data <- data.table::as.data.table(Data)
   
+  Data <- Data %>%
+    filter(
+      (Trophic == 1) |
+        grepl("^[^_]+_[Ff]", Var)
+    )
+  
   # --- Biomass Extraction ---
   Biomass <- Data[Var %in% param, .(
     ID = Var,
