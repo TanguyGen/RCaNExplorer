@@ -22,37 +22,37 @@ Fuzzy_proportion_plot <- function(Data, session) {
   # and build the fuzzy coverage bands
   make_bands <- function(df) {
     eps <- 1e-8
-    m <- mean(df$F)
-    v <- var(df$F)
     
-    # --- Handle degenerate cases explicitly ---
-    if (m <= eps) {
-      # All F=0 → fully natural mortality
+    # Compute fishing proportion
+    denom <- df$F + df$M
+    pF <- ifelse(denom > eps, df$F / denom, NA_real_)
+    pF <- pF[!is.na(pF)]
+    
+    m <- mean(pF)
+    v <- var(pF)
+    
+    # --- Degenerate cases ---
+    if (length(pF) == 0 || m <= eps) {
       y  <- seq(0, 1, length.out = 1001)
-      y0 <- head(y, -1)
-      y1 <- tail(y, -1)
       return(list(
-        bottom = tibble(y0, y1, prob = 0),   # no fishing mortality
-        top    = tibble(y0, y1, prob = 1),   # full natural mortality
+        bottom = tibble(y0 = head(y, -1), y1 = tail(y, -1), prob = 0),
+        top    = tibble(y0 = head(y, -1), y1 = tail(y, -1), prob = 1),
         mean_F = 0,
         q05_95 = c(0, 0)
       ))
     }
     
     if (m >= 1 - eps) {
-      # All F=1 → fully fishing mortality
       y  <- seq(0, 1, length.out = 1001)
-      y0 <- head(y, -1)
-      y1 <- tail(y, -1)
       return(list(
-        bottom = tibble(y0, y1, prob = 1),   # full fishing mortality
-        top    = tibble(y0, y1, prob = 0),   # no natural mortality
+        bottom = tibble(y0 = head(y, -1), y1 = tail(y, -1), prob = 1),
+        top    = tibble(y0 = head(y, -1), y1 = tail(y, -1), prob = 0),
         mean_F = 1,
         q05_95 = c(1, 1)
       ))
     }
     
-    # --- Normal case: Beta estimation ---
+    # --- Beta fit ---
     denom <- max(v, eps)
     num   <- max(m * (1 - m), eps)
     t <- max(num / denom - 1, eps)
@@ -69,12 +69,13 @@ Fuzzy_proportion_plot <- function(Data, session) {
     Fy <- pbeta(ym, a, b)
     
     list(
-      bottom = tibble(y0, y1, prob = 1 - Fy),
-      top    = tibble(y0, y1, prob = Fy),
+      bottom = tibble(y0, y1, prob = 1 - Fy),  # Fishing
+      top    = tibble(y0, y1, prob = Fy),      # Natural
       mean_F = a / (a + b),
       q05_95 = qbeta(c(0.05, 0.95), a, b)
     )
   }
+  
   
   
   # Apply to each Year separately
