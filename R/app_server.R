@@ -247,11 +247,7 @@ app_server <- function(input, output, session) {
     Positions$x <- ifelse(is.na(comp_param$X), runif(n, 0, 1), comp_param$X)
     Positions$y <- ifelse(is.na(comp_param$Y), runif(n, 0, 1), comp_param$Y)
   })
-  #If we move a node, assign the new node position to the reactive value
-  observeEvent(input$savedata, {
-    Positions$x <- sapply(input$node_positions, `[[`, "x") / 1000
-    Positions$y <- sapply(input$node_positions, `[[`, "y") / 1000
-  })
+  
   
   
   # ---- Tab Navigation ----
@@ -281,6 +277,13 @@ app_server <- function(input, output, session) {
       save(CaNSample, file = file)
     }
   )
+  
+  #If we move a node, assign the new node position to the reactive value
+  observeEvent(input$node_positions, {
+    print("input$node_positions")
+    Positions$x <- sapply(input$node_positions, `[[`, "x") / 1000
+    Positions$y <- sapply(input$node_positions, `[[`, "y") / 1000
+  })
   
   # Choice of variable to plot function 
   plot_dispatch <- list(
