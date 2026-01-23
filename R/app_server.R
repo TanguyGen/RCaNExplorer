@@ -230,11 +230,19 @@ app_server <- function(input, output, session) {
       ) #Use the image true size and increase the font of the labels
   })
   #Put the positions of the nodes into a reactive values to save them later
-  Positions <- reactiveValues(x = NULL, y = NULL)
+  Positions <- reactiveValues(x = NULL, y = NULL,x_download=NULL,y_download=NULL)
+  
+  #If we move a node, assign the new node position to the reactive value
+  observeEvent(input$node_positions, {
+    Positions$x_download <- sapply(input$node_positions, `[[`, "x") / 1000
+    Positions$y_download <- sapply(input$node_positions, `[[`, "y") / 1000
+  })
+  
   
   #Assign the initial positions to the ones from CaNSample
   observe({
-    req(data$CaNSample,is.null(Positions$x),is.null(Positions$y))
+    req(data$CaNSample,length(Positions$x)==0,length(Positions$y)==0)
+    
     comp_param <- data$CaNSample$CaNmod$components_param
     
     # Ensure X and Y exist
@@ -272,19 +280,13 @@ app_server <- function(input, output, session) {
     filename = "CaNSample.RData",
     content = function(file) {
       CaNSample <- data$CaNSample
-      CaNSample$CaNmod$components_param$X <- Positions$x
-      CaNSample$CaNmod$components_param$Y <- Positions$y
+      CaNSample$CaNmod$components_param$X <- Positions$x_download
+      CaNSample$CaNmod$components_param$Y <- Positions$y_download
       save(CaNSample, file = file)
     }
   )
   
-  #If we move a node, assign the new node position to the reactive value
-  observeEvent(input$node_positions, {
-    print("input$node_positions")
-    Positions$x <- sapply(input$node_positions, `[[`, "x") / 1000
-    Positions$y <- sapply(input$node_positions, `[[`, "y") / 1000
-  })
-  
+
   # Choice of variable to plot function 
   plot_dispatch <- list(
     "Biomass"             = BiomassSeries,
