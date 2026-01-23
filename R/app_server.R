@@ -99,6 +99,11 @@ app_server <- function(input, output, session) {
       pull(Component)
   })
   
+  observeEvent(input$Typegraph, {
+    Positions$x <- Positions$x_download
+    Positions$y <- Positions$y_download
+  })
+  
   #Add graphics if the components are not described in the package
   observe({
     #load the Info data frame containing the IDs, FullNames, colours and images of the ecosystem components
@@ -245,15 +250,19 @@ app_server <- function(input, output, session) {
     
     comp_param <- data$CaNSample$CaNmod$components_param
     
+    # Normalize column names
+    names(comp_param) <- toupper(names(comp_param))
+    
     # Ensure X and Y exist
-    if (!"X" %in% colnames(comp_param)) comp_param$X <- NA
-    if (!"Y" %in% colnames(comp_param)) comp_param$Y <- NA
+    if (!"X" %in% names(comp_param)) comp_param$X <- NA_real_
+    if (!"Y" %in% names(comp_param)) comp_param$Y <- NA_real_
     
     n <- nrow(comp_param)
     
-    # Assign with default values if NA (e.g., random within range)
-    Positions$x <- ifelse(is.na(comp_param$X), runif(n, 0, 1), comp_param$X)
-    Positions$y <- ifelse(is.na(comp_param$Y), runif(n, 0, 1), comp_param$Y)
+    X <- comp_param$X
+    Y <- comp_param$Y
+    Positions$x <- ifelse(is.na(X), runif(n, 0, 1), X)
+    Positions$y <- ifelse(is.na(Y), runif(n, 0, 1), Y)
   })
   
   
@@ -280,8 +289,12 @@ app_server <- function(input, output, session) {
     filename = "CaNSample.RData",
     content = function(file) {
       CaNSample <- data$CaNSample
-      CaNSample$CaNmod$components_param$X <- Positions$x_download
-      CaNSample$CaNmod$components_param$Y <- Positions$y_download
+      ids <- CaNSample$CaNmod$components_param$Component
+
+      CaNSample$CaNmod$components_param$x <- NULL
+      CaNSample$CaNmod$components_param$y <- NULL
+      CaNSample$CaNmod$components_param$X <- Positions$x_download[ids]
+      CaNSample$CaNmod$components_param$Y <- Positions$y_download[ids]
       save(CaNSample, file = file)
     }
   )
