@@ -165,6 +165,17 @@ app_server <- function(input, output, session) {
     resolved <- data$Resolved_components #Resolved ecosystem components in the chosen variable
     comp_param <- data$CaNSample$CaNmod$components_param #Components from CaNSample to use for the network
     
+    rescale_vis <- function(v, to = c(0, 1000)) {
+      rng <- range(v, na.rm = TRUE)
+      
+      # avoid division by zero
+      if (diff(rng) == 0) {
+        return(rep(mean(to), length(v)))
+      }
+      
+      (v - mean(rng)) / (diff(rng) / 2) * (diff(to) / 2)
+    }
+    
     #Create the nodes of the foodweb network
     nodes <- info %>%
       mutate(
@@ -180,8 +191,8 @@ app_server <- function(input, output, session) {
         color.highlight.background=color.background,
         color.highlight.border=color.border,
         borderWidthSelected=ifelse(is_resolved, 2, 1),
-        x = Positions$x[match(ID, comp_param$Component)] * 1000,
-        y = Positions$y[match(ID, comp_param$Component)] * 1000, #position of the nodes, random when not specified
+        x = rescale_vis(Positions$x[match(ID, comp_param$Component)]),
+        y = rescale_vis(Positions$y[match(ID, comp_param$Component)]), #position of the nodes, random when not specified
         font.bold = 24,
         font.size=20,
         font.color=ifelse(is_resolved, "black", "grey")
